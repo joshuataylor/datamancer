@@ -1,0 +1,21 @@
+# Gradle-related
+# project metadata - Each user should do their own Import using CONTRIBUTING.md
+*.duckdb
+.DS_Store
+.gradle
+.idea
+.intellijPlatform
+.kotlin
+.qodana
+.user.yml
+build/
+/cache
+/out
+/tmp
+/upgrading
+/testing/dbt-labs
+/dist
+build-logic/build
+datamancer-core/build
+datamancer-dbt-core/build
+datamancer-dbt-fusion/build

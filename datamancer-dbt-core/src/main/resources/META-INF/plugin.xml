@@ -1,0 +1,98 @@
+<idea-plugin>
+    <id>com.github.joshuataylor.datamancer.dbtcore</id>
+    <name>Datamancer - dbt Core Backend</name>
+    <vendor>joshuataylor</vendor>
+    <description><![CDATA[
+<p>Compilation and execution backend for the <b>Datamancer</b> plugin, powered by the
+<a href="https://www.getdbt.com/">dbt</a> CLI. Requires the Datamancer core plugin to be installed.</p>
+
+<h2>Features</h2>
+<ul>
+  <li>Compile dbt models using your project's dbt CLI installation (via Python)</li>
+  <li>Execute compiled SQL against a configured database data source</li>
+  <li>Gutter run icons for one-click compile and execute from the editor</li>
+  <li>Run configurations with automatic generation from model files</li>
+  <li>Manifest-powered column documentation with data types from <b>target/manifest.json</b></li>
+  <li>Documentation popups for macros and built-in dbt functions</li>
+  <li>Automatic manifest reloading when compilation output changes</li>
+  <li>Optional <a href="https://plugins.jetbrains.com/plugin/17195-mise">mise</a> integration for environment management</li>
+</ul>
+]]></description>
+    <dependencies>
+        <plugin id="com.github.joshuataylor.datamancer.core"/>
+        <module name="intellij.commandInterface"/>
+        <module name="intellij.database.dialects.generic"/>
+        <module name="intellij.database.dialects.base"/>
+        <module name="intellij.jinja"/>
+        <module name="intellij.json.backend"/>
+        <module name="intellij.python"/>
+        <module name="intellij.yaml.backend"/>
+        <plugin id="com.intellij.database"/>
+        <plugin id="com.intellij.modules.platform"/>
+        <plugin id="com.intellij.modules.python" />
+        <plugin id="com.intellij.modules.python-pro-capable"/>
+        <plugin id="com.intellij.modules.ultimate"/>
+        <plugin id="Pythonid"/>
+        <plugin id="PythonCore"/>
+    </dependencies>
+
+    <!-- Implement core extension points -->
+    <extensions defaultExtensionNs="com.github.joshuataylor.datamancer.core">
+        <dbtCompiler implementation="com.github.joshuataylor.datamancer.dbtcore.DatamancerDbtCoreCompilerProvider"/>
+        <dbtExecutor implementation="com.github.joshuataylor.datamancer.dbtcore.DatamancerDbtCoreExecutorProvider"/>
+        <debugInfoContributor implementation="com.github.joshuataylor.datamancer.dbtcore.DatamancerDbtCoreDebugInfoContributor"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Run configuration for compiling and executing dbt models via dbt-core -->
+        <configurationType
+                implementation="com.github.joshuataylor.datamancer.dbtcore.runConfiguration.DatamancerRunConfigurationType"/>
+
+        <!-- Run configuration producer for creating configs from dbt model files -->
+        <runConfigurationProducer
+                implementation="com.github.joshuataylor.datamancer.dbtcore.runConfiguration.DatamancerRunConfigurationProducer"/>
+
+        <!-- Run gutter icon for dbt model files -->
+        <runLineMarkerContributor
+                language="SQL"
+                implementationClass="com.github.joshuataylor.datamancer.dbtcore.runConfiguration.DatamancerRunLineMarkerContributor"/>
+        <runLineMarkerContributor
+                language="Jinja2"
+                implementationClass="com.github.joshuataylor.datamancer.dbtcore.runConfiguration.DatamancerRunLineMarkerContributor"/>
+        <runLineMarkerContributor
+                language="DjangoTemplate"
+                implementationClass="com.github.joshuataylor.datamancer.dbtcore.runConfiguration.DatamancerRunLineMarkerContributor"/>
+
+        <!-- Compile service for dbt-core backend -->
+        <projectService serviceImplementation="com.github.joshuataylor.datamancer.dbtcore.compile.DatamancerCompileService"/>
+
+        <!-- Manifest service: loads and caches target/manifest.json for each dbt project -->
+        <projectService serviceImplementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestService"/>
+
+        <!-- Startup activity: initial manifest scan after smart mode -->
+        <postStartupActivity implementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestStartupActivity"/>
+
+        <!-- VFS listener: reloads manifest when target/manifest.json changes on disk -->
+        <vfs.asyncListener implementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestFileListener"/>
+
+        <!-- Column documentation hover support from YAML schema files -->
+        <platform.backend.documentation.targetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerColumnDocumentationProvider"/>
+        <platform.backend.documentation.psiTargetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerColumnDocumentationProvider"/>
+
+        <!-- Macro documentation hover support -->
+        <platform.backend.documentation.targetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerMacroDocumentationProvider"/>
+        <platform.backend.documentation.psiTargetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerMacroDocumentationProvider"/>
+
+        <!-- Built-in dbt function documentation hover support -->
+        <platform.backend.documentation.targetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerBuiltinDocumentationProvider"/>
+        <platform.backend.documentation.psiTargetProvider
+                implementation="com.github.joshuataylor.datamancer.dbtcore.documentation.DatamancerBuiltinDocumentationProvider"/>
+    </extensions>
+
+    <depends optional="true" config-file="datamancer-dbt-core-mise.xml">com.github.l34130.mise</depends>
+</idea-plugin>

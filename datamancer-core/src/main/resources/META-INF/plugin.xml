@@ -1,0 +1,163 @@
+<idea-plugin>
+    <id>com.github.joshuataylor.datamancer.core</id>
+    <name>Datamancer</name>
+    <vendor>joshuataylor</vendor>
+    <incompatible-with>
+        org.jetbrains.dbt
+    </incompatible-with>
+    <description><![CDATA[
+<p>Datamancer brings full <a href="https://www.getdbt.com/">dbt</a> (data build tool) support to your JetBrains IDE,
+with intelligent code assistance for SQL files that use Jinja2 templating.</p>
+
+<h2>Features</h2>
+<ul>
+  <li>Code completion for <b>ref()</b>, <b>source()</b>, <b>var()</b>, and <b>config()</b> calls</li>
+  <li>Go-to-definition for models, sources, variables, and macros (Ctrl+Click / Cmd+Click)</li>
+  <li>Column documentation popups with descriptions and data types (Ctrl+Q / Cmd+Q)</li>
+  <li>Find usages for models, sources, and macros (Alt+F7 / Cmd+Option+F7)</li>
+  <li>Rename refactoring for models with automatic ref() updates across the project</li>
+  <li>Jinja2 syntax highlighting with layered SQL parsing and brace matching</li>
+  <li>Documentation hover for built-in dbt functions and dbt_utils macros</li>
+  <li>Automatic dbt project discovery from <b>dbt_project.yml</b></li>
+  <li>Compile and execute models via backend plugins with gutter run icons</li>
+  <li>Custom file icons for dbt SQL files and project roots</li>
+  <li>Per-project settings for profile directory, target, data source, and environment variables</li>
+</ul>
+
+<h2>Backend Plugins</h2>
+<p>Datamancer uses a modular backend architecture. Install an optional companion plugin for compilation and execution:</p>
+<ul>
+  <li><b>Datamancer - dbt Core Backend</b> compiles and runs models via the dbt CLI, with manifest-powered column documentation and run configurations</li>
+  <li><b>Datamancer - dbt Fusion Backend</b> (coming soon) will provide compilation and execution via dbt Fusion</li>
+</ul>
+
+<h2>Compatibility</h2>
+<p>Requires PyCharm Professional 2025.3.2+ or IntelliJ IDEA Ultimate 2026.1+.
+Not compatible with Community editions or DataGrip (Jinja2 support is required).</p>
+]]></description>
+    <dependencies>
+        <module name="intellij.commandInterface"/>
+        <module name="intellij.database.dialects.generic"/>
+        <module name="intellij.database.dialects.base"/>
+        <module name="intellij.jinja"/>
+        <module name="intellij.json.backend"/>
+        <module name="intellij.python"/>
+        <module name="intellij.yaml.backend"/>
+        <plugin id="com.intellij.database"/>
+        <plugin id="com.intellij.modules.platform"/>
+        <plugin id="com.intellij.modules.python" />
+        <plugin id="com.intellij.modules.python-pro-capable"/>
+        <plugin id="com.intellij.modules.ultimate"/>
+        <plugin id="Pythonid"/>
+        <plugin id="PythonCore"/>
+    </dependencies>
+
+    <!-- Extension points for backend plugins (dbt-core, dbt-fusion, etc.) -->
+    <extensionPoints>
+        <extensionPoint name="dbtCompiler"
+                        interface="com.github.joshuataylor.datamancer.core.api.DatamancerDbtCompilerProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+        <extensionPoint name="dbtExecutor"
+                        interface="com.github.joshuataylor.datamancer.core.api.DatamancerDbtExecutorProvider"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+        <extensionPoint name="debugInfoContributor"
+                        interface="com.github.joshuataylor.datamancer.core.api.DatamancerDebugInfoContributor"
+                        dynamic="true"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- TypedHandler for automatic quote completion in Jinja2 templates -->
+        <typedHandler implementation="com.github.joshuataylor.datamancer.core.lang.DbtJinjaTypedHandler"/>
+
+        <!-- SQL resolve extension for dbt ref() calls -->
+        <sql.resolveExtension implementation="com.github.joshuataylor.datamancer.core.sql.DatamancerSqlExtension"/>
+
+        <!-- Element manipulator for rename refactoring of ref() calls -->
+        <lang.elementManipulator
+                forClass="com.intellij.jinja.tags.Jinja2FunctionCall"
+                implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtJinja2FunctionCallManipulator"/>
+
+        <!-- Language substitutor for SQL files in dbt modules -->
+        <lang.substitutor language="SQL"
+                          implementationClass="com.github.joshuataylor.datamancer.core.DatamancerLanguageSubstitutor"
+                          order="first"/>
+
+        <!-- Outer language patcher for SQL in Jinja2 templates -->
+        <outerLanguageRangePatcher language="SQL"
+                                   implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtOuterLanguagePatcher"/>
+
+        <!-- dbt Projects settings -->
+        <projectConfigurable
+                parentId="tools"
+                instance="com.github.joshuataylor.datamancer.core.settings.ProjectSettingsConfigurable"
+                id="com.github.joshuataylor.datamancer.core.settings"
+                displayName="dbt Projects"
+                nonDefaultProject="true"/>
+
+        <lang.braceMatcher language="DjangoTemplate"
+                           implementationClass="com.github.joshuataylor.datamancer.core.highlighting.DbtJinjaBraceMatcher"/>
+
+
+        <!-- Custom icon provider for dbt SQL files -->
+        <fileIconProvider implementation="com.github.joshuataylor.datamancer.core.icons.DbtFileIconProvider"/>
+
+        <!-- Reference contributor for dbt model references in Jinja2 templates -->
+        <psi.referenceContributor language="Jinja2"
+                                  implementation="com.github.joshuataylor.datamancer.core.lang.DbtReferenceContributor"/>
+        <psi.referenceContributor language="DjangoTemplate"
+                                  implementation="com.github.joshuataylor.datamancer.core.lang.DbtReferenceContributor"/>
+
+        <!-- Reference contributor for dbt model/source names in YAML schema files -->
+        <psi.referenceContributor language="yaml"
+                                  implementation="com.github.joshuataylor.datamancer.core.lang.DbtYamlReferenceContributor"/>
+
+        <!-- Completion contributor for dbt config() keyword arguments -->
+        <completion.contributor language="Jinja2"
+                                implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtConfigCompletionContributor"/>
+        <completion.contributor language="DjangoTemplate"
+                                implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtConfigCompletionContributor"/>
+
+        <fileType name="YAML" fileNames="dbt_project.yml"/>
+
+<!-- dbt_utils package function documentation hover support -->
+        <platform.backend.documentation.targetProvider
+                implementation="com.github.joshuataylor.datamancer.core.documentation.DatamancerDbtUtilsDocumentationProvider"/>
+        <platform.backend.documentation.psiTargetProvider
+                implementation="com.github.joshuataylor.datamancer.core.documentation.DatamancerDbtUtilsDocumentationProvider"/>
+
+        <!-- Find Usages support for dbt macro definitions -->
+        <findUsagesHandlerFactory
+                implementation="com.github.joshuataylor.datamancer.core.lang.DatamancerFindUsagesHandlerFactory"/>
+        <elementDescriptionProvider
+                implementation="com.github.joshuataylor.datamancer.core.lang.DatamancerElementDescriptionProvider"/>
+
+        <!-- Project view decorator for dbt project icons -->
+        <projectViewNodeDecorator
+                implementation="com.github.joshuataylor.datamancer.core.projectView.DatamancerDbtProjectViewNodeDecorator"/>
+
+        <!-- Startup activity to discover dbt projects -->
+        <postStartupActivity
+                implementation="com.github.joshuataylor.datamancer.core.services.DatamancerProjectStartupActivity"/>
+
+        <!-- Notification group for debug action -->
+        <notificationGroup id="Datamancer" displayType="BALLOON"/>
+    </extensions>
+    <!-- dbt-specific Jinja2 tag library for code completion -->
+    <extensions defaultExtensionNs="Pythonid">
+        <templateLanguageCoreTags language="Jinja2"
+                                  implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtTagLibrary"
+                                  order="before jinja2"/>
+    </extensions>
+
+    <actions>
+        <action id="Datamancer.Debug"
+                class="com.github.joshuataylor.datamancer.core.actions.DatamancerDebugAction"
+                text="Datamancer Debug"
+                description="Write debug information to file for troubleshooting">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <keyboard-shortcut first-keystroke="control alt shift D" keymap="$default"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -1,0 +1,39 @@
+# Syncs dbt Jinja function documentation from docs.getdbt.com into plugin resources.
+# Triggered manually from the Actions tab. Opens a PR if any docs changed.
+
+name: Sync dbt docs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Sync dbt Jinja docs
+    runs-on: ubuntu-24.04
+    steps:
+
+      - name: Fetch Sources
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Run sync script
+        run: ./scripts/sync-dbt-docs.sh
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: sync-dbt-docs
+          commit-message: "Sync dbt Jinja function documentation"
+          title: "Sync dbt Jinja function documentation"
+          body: |
+            Automated sync of dbt Jinja function documentation from
+            [docs.getdbt.com](https://github.com/dbt-labs/docs.getdbt.com).
+          labels: documentation

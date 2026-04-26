@@ -1,0 +1,22 @@
+<idea-plugin>
+    <id>com.github.joshuataylor.datamancer.dbtfusion</id>
+    <name>Datamancer - dbt Fusion Backend</name>
+    <vendor>joshuataylor</vendor>
+    <description><![CDATA[
+<p>Compilation and execution backend for the <b>Datamancer</b> plugin, powered by
+<a href="https://www.getdbt.com/">dbt Fusion</a>. Requires the Datamancer core plugin to be installed.</p>
+
+<p><b>This backend is not yet available.</b> It will provide compilation and execution via the
+dbt Fusion parsing engine over LSP, as an alternative to the dbt Core backend.</p>
+]]></description>
+    <dependencies>
+        <plugin id="com.github.joshuataylor.datamancer.core"/>
+        <plugin id="com.intellij.modules.platform"/>
+    </dependencies>
+
+    <!-- Implement core extension points -->
+    <extensions defaultExtensionNs="com.github.joshuataylor.datamancer.core">
+        <dbtCompiler implementation="com.github.joshuataylor.datamancer.dbtfusion.DatamancerDbtFusionCompilerProvider"/>
+        <dbtExecutor implementation="com.github.joshuataylor.datamancer.dbtfusion.DatamancerDbtFusionExecutorProvider"/>
+    </extensions>
+</idea-plugin>

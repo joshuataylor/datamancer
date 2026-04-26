@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <!-- Base folder icon (darker for dark theme) -->
+    <path fill="#7FAF1B"
+          d="M0 2.5C0 1.67 0.67 1 1.5 1h4.25l1.5 1.5h7.25c.83 0 1.5.67 1.5 1.5v9c0 .83-.67 1.5-1.5 1.5h-13C.67 14.5 0 13.83 0 13V2.5z"/>
+    <!-- dbt badge in bottom right -->
+    <circle cx="12" cy="12" r="3.5" fill="#FF8C69"/>
+    <text x="12" y="13.5" font-family="Arial, sans-serif" font-size="5" font-weight="bold" text-anchor="middle"
+          fill="white">d
+    </text>
+</svg>

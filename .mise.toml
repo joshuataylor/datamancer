@@ -1,0 +1,15 @@
+# [[env]]
+# _.python.venv = { path = "testing/python_setup/.venv" }
+# PIP_REQUIRE_VIRTUALENV = "true"
+
+[tools]
+java = { version = "jetbrains-jcef-21.0.10-b1163.110" }
+#python = { version = '3.13.13', create = false }
+#uv = "latest"
+
+[tasks.buildPlugin]
+run = "scripts/buildplugin.sh"
+
+[tasks.clean]
+description = 'Remove all build artifacts, caches, and platform directories'
+run = 'rm -rf build .gradle .kotlin .intellijPlatform build-logic/build datamancer-core/build datamancer-dbt-core/build datamancer-dbt-fusion/build testing/jaffle_shop_duckdb/.venv testing/jaffle_shop_duckdb/target testing/jaffle_shop_duckdb/logs testing/jaffle_shop_duckdb/*.duckdb testing/jaffle_shop_duckdb/.idea dist'

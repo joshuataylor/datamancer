@@ -1,0 +1,17 @@
+pluginManagement {
+    includeBuild("build-logic")
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+rootProject.name = "datamancer"
+
+include("datamancer-core")
+include("datamancer-dbt-core")
+include("datamancer-dbt-fusion")
