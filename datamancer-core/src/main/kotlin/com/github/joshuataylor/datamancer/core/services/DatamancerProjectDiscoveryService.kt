@@ -1,5 +1,6 @@
 package com.github.joshuataylor.datamancer.core.services
 
+import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirectories
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfigStore
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerWorkspaceKeys
@@ -24,17 +25,50 @@ class DatamancerProjectDiscoveryService(private val project: Project) {
 
     /**
      * Find all dbt_project.yml files in the project.
+     *
+     * Filters out files that sit inside another project's excluded directories
+     * (e.g. `dbt_packages/some_package/dbt_project.yml`), since those are
+     * dependency projects rather than the user's own projects.
+     *
      * Uses readAction to ensure proper read lock acquisition.
      */
     suspend fun findAllDbtProjects(): List<VirtualFile> {
         log.debug("Searching for dbt_project.yml files in project: ${project.name}")
         return readAction {
-            val files = FilenameIndex.getVirtualFilesByName(
+            val allFiles = FilenameIndex.getVirtualFilesByName(
                 "dbt_project.yml",
                 GlobalSearchScope.projectScope(project)
             ).filter { it.isValid && !it.isDirectory }
 
-            log.debug("Found ${files.size} dbt_project.yml files")
+            log.debug("Found ${allFiles.size} dbt_project.yml files (before exclusion filtering)")
+
+            // Collect all project roots (parent directory of each dbt_project.yml)
+            val projectRoots = allFiles.map { it.parent.path.trimEnd('/') }
+
+            // Filter out files that sit inside another project's excluded directories.
+            // Use the default excluded list here since we may not have configs yet for
+            // newly discovered projects; saved configs are checked separately via the
+            // persistent store.
+            val defaultExcluded = DatamancerProjectConfig.DEFAULT_EXCLUDED_DIRECTORIES
+            val configStore = DatamancerProjectConfigStore.getInstance(project)
+
+            val files = allFiles.filter { file ->
+                val filePath = file.path
+                val isExcluded = projectRoots.any { root ->
+                    // Don't test a root against itself
+                    if (filePath.startsWith("$root/dbt_project.yml")) return@any false
+                    val savedConfig = configStore.getAllConfigs().values
+                        .find { it.projectRoot.trimEnd('/') == root }
+                    val excludedDirs = savedConfig?.excludedDirectories ?: defaultExcluded
+                    DatamancerExcludedDirectories.isInExcludedDirectory(filePath, root, excludedDirs)
+                }
+                if (isExcluded) {
+                    log.debug("  Excluding nested dbt project: $filePath")
+                }
+                !isExcluded
+            }
+
+            log.debug("After exclusion filtering: ${files.size} dbt_project.yml files")
             files.forEachIndexed { index, file ->
                 log.debug("  ${index + 1}. ${file.path}")
             }
@@ -164,6 +198,15 @@ class DatamancerProjectDiscoveryService(private val project: Project) {
         // Persist any newly created default configs
         for ((moduleName, config) in configsToSave) {
             configStore.saveConfig(moduleName, config)
+        }
+
+        // Apply directory exclusions to IntelliJ module content entries.
+        // This marks directories like target/, logs/, dbt_packages/ as excluded so
+        // the IDE skips them during indexing, search, and file traversal.
+        log.debug("Applying directory exclusions for discovered dbt projects")
+        for ((_, moduleName) in projectModulePairs) {
+            val config = configStore.getConfig(moduleName) ?: continue
+            DatamancerExcludedDirectories.applyExclusions(project, moduleName, config)
         }
 
         log.debug("Discovery complete: $newAssociations new, $restoredAssociations restored, $existingAssociations existing")

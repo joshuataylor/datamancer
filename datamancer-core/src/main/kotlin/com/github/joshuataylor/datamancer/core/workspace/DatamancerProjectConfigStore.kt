@@ -38,6 +38,7 @@ class DatamancerProjectConfigStore : PersistentStateComponent<DatamancerProjectC
         @MapAnnotation(entryTagName = "var", keyAttributeName = "name", valueAttributeName = "value")
         var environmentVariables: MutableMap<String, String> = mutableMapOf(),
         var preferredBackend: String? = null,
+        var excludedDirectories: MutableList<String> = DatamancerProjectConfig.DEFAULT_EXCLUDED_DIRECTORIES.toMutableList(),
     )
 
     data class State(
@@ -101,6 +102,7 @@ private fun DatamancerProjectConfigStore.PersistedProjectConfig.toProjectConfig(
     queryLimit = queryLimit,
     environmentVariables = environmentVariables.toMap(),
     preferredBackend = preferredBackend,
+    excludedDirectories = excludedDirectories.toList(),
 )
 
 private fun DatamancerProjectConfig.toPersisted() = DatamancerProjectConfigStore.PersistedProjectConfig(
@@ -111,4 +113,5 @@ private fun DatamancerProjectConfig.toPersisted() = DatamancerProjectConfigStore
     queryLimit = queryLimit,
     environmentVariables = environmentVariables.toMutableMap(),
     preferredBackend = preferredBackend,
+    excludedDirectories = excludedDirectories.toMutableList(),
 )

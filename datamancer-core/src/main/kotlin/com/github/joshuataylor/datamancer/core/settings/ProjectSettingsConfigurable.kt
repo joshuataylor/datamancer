@@ -2,6 +2,7 @@ package com.github.joshuataylor.datamancer.core.settings
 
 import com.github.joshuataylor.datamancer.core.services.DatamancerDbtProjectIndexService
 import com.github.joshuataylor.datamancer.core.services.DatamancerProjectDiscoveryService
+import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirectories
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfigStore
 import com.github.joshuataylor.datamancer.core.workspace.setDbtConfig
@@ -58,6 +59,7 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
     private val dataSourceCombo: ComboBox<String> = ComboBox<String>()
     private val queryLimitField = JBTextField()
     private val envVarsComponent = EnvironmentVariablesComponent()
+    private val excludedDirectoriesField = JBTextField()
     private val useMiseCheckbox = javax.swing.JCheckBox("Use mise environment variables").apply {
         toolTipText = "Inject environment variables from mise when compiling dbt models"
     }
@@ -205,6 +207,12 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                             .align(AlignX.FILL)
                     }.layout(RowLayout.PARENT_GRID)
 
+                    row("Excluded Directories:") {
+                        cell(excludedDirectoriesField)
+                            .align(AlignX.FILL)
+                            .comment("Comma-separated directory names to exclude from indexing (relative to project root)")
+                    }
+
                     if (misePluginAvailable) {
                         row {
                             cell(useMiseCheckbox)
@@ -273,6 +281,7 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
         dataSourceCombo.selectedItem = config.defaultDataSource ?: "<none>"
         queryLimitField.text = config.queryLimit.toString()
         envVarsComponent.envData = EnvironmentVariablesData.create(config.environmentVariables, true)
+        excludedDirectoriesField.text = config.excludedDirectories.joinToString(", ")
         if (misePluginAvailable) {
             useMiseCheckbox.isSelected = config.useMiseEnvironment
         }
@@ -286,13 +295,19 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
 
         val dataSource = (dataSourceCombo.selectedItem as? String)?.takeIf { it != "<none>" }
 
+        val excludedDirs = excludedDirectoriesField.text
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
         val updatedConfig = currentConfig.copy(
             profileDirectory = profileDirectoryField.text.takeIf { it.isNotBlank() },
             defaultTarget = defaultTargetField.text.takeIf { it.isNotBlank() },
             defaultDataSource = dataSource,
             queryLimit = queryLimitField.text.toIntOrNull() ?: 1000,
             environmentVariables = envVarsComponent.envData.envs,
-            useMiseEnvironment = if (misePluginAvailable) useMiseCheckbox.isSelected else currentConfig.useMiseEnvironment
+            useMiseEnvironment = if (misePluginAvailable) useMiseCheckbox.isSelected else currentConfig.useMiseEnvironment,
+            excludedDirectories = excludedDirs
         )
 
         modifiedConfigs[selectedProject] = updatedConfig
@@ -335,6 +350,15 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                 }
             }
             log.debug("Applied ${appliedCount} dbt project configurations")
+        }
+
+        // Re-apply directory exclusions for any projects where the list changed
+        for ((moduleName, config) in modifiedConfigs) {
+            val previousConfig = originalConfigs[moduleName]
+            if (previousConfig == null || previousConfig.excludedDirectories != config.excludedDirectories) {
+                log.debug("Excluded directories changed for module '$moduleName', re-applying exclusions")
+                DatamancerExcludedDirectories.applyExclusions(project, moduleName, config)
+            }
         }
 
         // Update original configs to reflect applied changes

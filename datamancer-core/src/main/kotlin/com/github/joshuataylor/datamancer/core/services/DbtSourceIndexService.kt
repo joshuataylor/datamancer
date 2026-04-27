@@ -1,5 +1,6 @@
 package com.github.joshuataylor.datamancer.core.services
 
+import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirectories
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -130,6 +131,7 @@ class DbtSourceIndexService(private val project: Project) {
         val filePath = file.path
         return configs.values.any { config ->
             filePath.startsWith(config.projectRoot)
+                && !DatamancerExcludedDirectories.isInExcludedDirectory(filePath, config)
         }
     }
 

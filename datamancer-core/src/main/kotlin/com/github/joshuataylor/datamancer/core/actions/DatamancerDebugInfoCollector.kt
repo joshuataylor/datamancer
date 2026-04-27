@@ -130,6 +130,7 @@ class DatamancerDebugInfoCollector(private val project: Project) {
             appendLine("  Query Limit: ${config.queryLimit}")
             appendLine("  Preferred Backend: ${config.preferredBackend ?: "(not set)"}")
             appendLine("  Use Mise Environment: ${config.useMiseEnvironment}")
+            appendLine("  Excluded Directories: ${config.excludedDirectories.joinToString(", ")}")
             if (config.environmentVariables.isNotEmpty()) {
                 appendLine("  Environment Variables:")
                 for ((key, value) in config.environmentVariables) {

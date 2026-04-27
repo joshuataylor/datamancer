@@ -2,6 +2,10 @@
 
 # datamancer Changelog
 
-## [Unreleased]
+## [0.0.10]
 ### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+- Configurable excluded directories for dbt projects (default: `target`, `logs`, `dbt_packages`)
+  - Excluded directories are marked via IntelliJ's content entry exclusion, removing them from IDE indexing, search, and file traversal
+  - Per-project setting editable in Settings > Tools > dbt Projects
+  - `dbt_project.yml` files inside excluded directories (e.g. packages) are no longer discovered as separate projects
+  - Defence-in-depth filtering in source and column metadata index services
