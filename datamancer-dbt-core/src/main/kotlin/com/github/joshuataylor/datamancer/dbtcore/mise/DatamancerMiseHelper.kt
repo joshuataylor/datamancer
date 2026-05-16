@@ -14,7 +14,7 @@ object DatamancerMiseHelper {
      * Whether mise is enabled at the project level (master toggle).
      */
     fun isMiseEnabledForProject(project: Project): Boolean {
-        return project.service<MiseProjectSettings>().state.useMiseDirEnv
+        return service<MiseProjectSettings>().state.useMiseDirEnv
     }
 
     /**
