@@ -1,7 +1,7 @@
 package com.github.joshuataylor.datamancer.core.workspace
 
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -84,9 +84,9 @@ suspend fun Project.setDbtConfig(moduleEntity: ModuleEntity, config: DatamancerP
     log.debug("Setting dbt config for module: ${moduleEntity.name}, project root: ${config.projectRoot}")
     val moduleName = moduleEntity.name
     val workspaceModel = WorkspaceModel.getInstance(this)
-    // Use writeAction + updateProjectModel because the suspend update() silently discards
+    // Use edtWriteAction + updateProjectModel because the suspend update() silently discards
     // external-mapping-only changes (areEntitiesChanged returns false).
-    writeAction {
+    edtWriteAction {
         workspaceModel.updateProjectModel("Update dbt configuration") { builder ->
             val module = ModuleId(moduleName).resolve(builder) ?: return@updateProjectModel
             val mapping = builder.getMutableExternalMapping(DatamancerWorkspaceKeys.DBT_PROJECT_CONFIG)
@@ -106,7 +106,7 @@ suspend fun Project.removeDbtConfig(moduleEntity: ModuleEntity) {
     log.debug("Removing dbt config for module: ${moduleEntity.name}")
     val moduleName = moduleEntity.name
     val workspaceModel = WorkspaceModel.getInstance(this)
-    writeAction {
+    edtWriteAction {
         workspaceModel.updateProjectModel("Remove dbt configuration") { builder ->
             val module = ModuleId(moduleName).resolve(builder) ?: return@updateProjectModel
             val mapping = builder.getMutableExternalMapping(DatamancerWorkspaceKeys.DBT_PROJECT_CONFIG)

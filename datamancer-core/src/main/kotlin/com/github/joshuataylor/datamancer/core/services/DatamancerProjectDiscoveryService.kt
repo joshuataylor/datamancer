@@ -4,8 +4,8 @@ import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirec
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfigStore
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerWorkspaceKeys
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -150,10 +150,10 @@ class DatamancerProjectDiscoveryService(private val project: Project) {
         var existingAssociations = 0
         val configsToSave = mutableListOf<Pair<String, DatamancerProjectConfig>>()
 
-        // Use writeAction + updateProjectModel because the suspend workspaceModel.update() uses
+        // Use edtWriteAction + updateProjectModel because the suspend workspaceModel.update() uses
         // updateWithRetry which silently discards external-mapping-only changes (areEntitiesChanged
         // returns false when only external mappings are modified).
-        writeAction {
+        edtWriteAction {
             workspaceModel.updateProjectModel("Associate dbt projects with modules") { builder ->
                 val mapping = builder.getMutableExternalMapping(DatamancerWorkspaceKeys.DBT_PROJECT_CONFIG)
 
