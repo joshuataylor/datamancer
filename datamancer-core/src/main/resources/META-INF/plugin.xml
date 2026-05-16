@@ -103,6 +103,14 @@ Not compatible with Community editions or DataGrip (Jinja2 support is required).
         <!-- Custom icon provider for dbt SQL files -->
         <fileIconProvider implementation="com.github.joshuataylor.datamancer.core.icons.DbtFileIconProvider"/>
 
+        <!-- Gutter icon for navigating from SQL model files to YAML definitions -->
+        <codeInsight.lineMarkerProvider language="SQL"
+                implementationClass="com.github.joshuataylor.datamancer.core.lang.DatamancerYamlDefinitionLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Jinja2"
+                implementationClass="com.github.joshuataylor.datamancer.core.lang.DatamancerYamlDefinitionLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="DjangoTemplate"
+                implementationClass="com.github.joshuataylor.datamancer.core.lang.DatamancerYamlDefinitionLineMarkerProvider"/>
+
         <!-- Reference contributor for dbt model references in Jinja2 templates -->
         <psi.referenceContributor language="Jinja2"
                                   implementation="com.github.joshuataylor.datamancer.core.lang.DbtReferenceContributor"/>
@@ -158,6 +166,12 @@ Not compatible with Community editions or DataGrip (Jinja2 support is required).
                 description="Write debug information to file for troubleshooting">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <keyboard-shortcut first-keystroke="control alt shift D" keymap="$default"/>
+        </action>
+        <action id="Datamancer.GoToYamlDefinition"
+                class="com.github.joshuataylor.datamancer.core.actions.DatamancerGoToYamlDefinitionAction"
+                text="Go to YAML Definition"
+                description="Navigate from a dbt SQL model to its YAML schema definition">
+            <add-to-group group-id="GoToMenu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>

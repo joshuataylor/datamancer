@@ -2,6 +2,11 @@
 
 # datamancer Changelog
 
+## [0.0.11]
+### Added
+- Gutter icon on dbt SQL model files for navigating to the corresponding YAML schema definition (reverse of the existing YAML->SQL go-to-definition)
+- "Go to YAML Definition" action in the Navigate menu for the same navigation via keyboard
+
 ## [0.0.10]
 ### Added
 - Configurable excluded directories for dbt projects (default: `target`, `logs`, `dbt_packages`)

@@ -48,6 +48,7 @@ With SQL files, and YAML files, full Go-to-Definition support for dbt constructs
 - `var('variable_name')` -> navigates to the variable definition in `dbt_project.yml`
 - `{{ my_macro() }}` -> navigates to the macro definition in `.sql` files under `/macros/` (and `Find Usages` shows all macro calls across the project)
 - YAML schema files -> `CMD+Click` on model names to navigate to their SQL files, on source/table names to navigate to their definitions, and on column names to navigate to their occurrences in the parent model's SQL.
+- SQL model files -> a gutter icon navigates to the model's YAML schema definition (also available via Navigate -> Go to YAML Definition).
 
 ![goto_definition.gif](images/goto_definition.gif)
 
