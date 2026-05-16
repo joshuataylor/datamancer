@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLMapping
@@ -57,6 +58,7 @@ class DbtSourceIndexService(private val project: Project) {
      *
      * @return Map of source name to SourceDefinition
      */
+    @RequiresReadLock
     fun getAllSources(): Map<String, SourceDefinition> {
         val sources = mutableMapOf<String, SourceDefinition>()
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
@@ -96,6 +98,7 @@ class DbtSourceIndexService(private val project: Project) {
      * @param sourceName The name of the source to find
      * @return The SourceDefinition, or null if not found
      */
+    @RequiresReadLock
     fun findSource(sourceName: String): SourceDefinition? {
         return getAllSources()[sourceName]
     }
@@ -107,6 +110,7 @@ class DbtSourceIndexService(private val project: Project) {
      * @param tableName The name of the table
      * @return The TableDefinition, or null if not found
      */
+    @RequiresReadLock
     fun findSourceTable(sourceName: String, tableName: String): TableDefinition? {
         val source = findSource(sourceName) ?: return null
         return source.tables.find { it.name == tableName }
@@ -115,6 +119,7 @@ class DbtSourceIndexService(private val project: Project) {
     /**
      * Gets all available source names for code completion.
      */
+    @RequiresReadLock
     fun getAllSourceNames(): List<String> {
         return getAllSources().keys.toList()
     }
@@ -122,6 +127,7 @@ class DbtSourceIndexService(private val project: Project) {
     /**
      * Gets all table names for a given source.
      */
+    @RequiresReadLock
     fun getTableNames(sourceName: String): List<String> {
         val source = findSource(sourceName) ?: return emptyList()
         return source.tables.map { it.name }

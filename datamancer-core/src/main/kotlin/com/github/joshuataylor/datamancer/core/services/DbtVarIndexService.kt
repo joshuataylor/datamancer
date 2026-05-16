@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLMapping
 
@@ -53,6 +54,7 @@ class DbtVarIndexService(private val project: Project) {
      *
      * @return Map of variable name to VarDefinition
      */
+    @RequiresReadLock
     fun getAllVars(): Map<String, VarDefinition> {
         val vars = mutableMapOf<String, VarDefinition>()
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
@@ -85,6 +87,7 @@ class DbtVarIndexService(private val project: Project) {
      * @param varName The name of the variable to find
      * @return The VarDefinition, or null if not found
      */
+    @RequiresReadLock
     fun findVar(varName: String): VarDefinition? {
         return getAllVars()[varName]
     }
@@ -92,6 +95,7 @@ class DbtVarIndexService(private val project: Project) {
     /**
      * Gets all available variable names for code completion.
      */
+    @RequiresReadLock
     fun getAllVarNames(): List<String> {
         return getAllVars().keys.toList()
     }

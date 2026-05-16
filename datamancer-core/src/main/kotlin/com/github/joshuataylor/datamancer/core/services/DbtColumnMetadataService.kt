@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLMapping
@@ -63,6 +64,7 @@ class DbtColumnMetadataService(private val project: Project) {
      * @param modelName The dbt model name (e.g. "stg_customers")
      * @return The model metadata, or null if not found
      */
+    @RequiresReadLock
     fun findModel(modelName: String): ModelMetadata? {
         return getAllModels()[modelName]
     }
@@ -74,6 +76,7 @@ class DbtColumnMetadataService(private val project: Project) {
      * @param columnName The column name
      * @return The column metadata, or null if not found
      */
+    @RequiresReadLock
     fun findColumnMetadata(modelName: String, columnName: String): ColumnMetadata? {
         val model = findModel(modelName) ?: return null
         return model.columns[columnName]
@@ -84,6 +87,7 @@ class DbtColumnMetadataService(private val project: Project) {
      *
      * @return Map of model name to ModelMetadata
      */
+    @RequiresReadLock
     fun getAllModels(): Map<String, ModelMetadata> {
         val models = mutableMapOf<String, ModelMetadata>()
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
@@ -123,6 +127,7 @@ class DbtColumnMetadataService(private val project: Project) {
         }
     }
 
+    @RequiresReadLock
     internal fun parseModelsFromYaml(yamlFile: YAMLFile, virtualFile: VirtualFile): List<ModelMetadata> {
         val models = mutableListOf<ModelMetadata>()
 
