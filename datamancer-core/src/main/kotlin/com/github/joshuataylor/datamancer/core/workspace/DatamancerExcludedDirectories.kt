@@ -1,6 +1,8 @@
 package com.github.joshuataylor.datamancer.core.workspace
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -27,7 +29,9 @@ object DatamancerExcludedDirectories {
      * @param config The dbt project configuration with the excluded directory list
      */
     fun applyExclusions(project: Project, moduleName: String, config: DatamancerProjectConfig) {
-        val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
+        val module = ReadAction.nonBlocking<Module?> {
+            ModuleManager.getInstance(project).findModuleByName(moduleName)
+        }.executeSynchronously()
         if (module == null) {
             log.warn("Cannot apply exclusions: module '$moduleName' not found")
             return
