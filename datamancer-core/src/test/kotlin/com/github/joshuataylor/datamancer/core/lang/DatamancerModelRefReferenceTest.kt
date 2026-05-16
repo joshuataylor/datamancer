@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DbtModelRefReference.
@@ -67,6 +68,7 @@ class DatamancerModelRefReferenceTest : BasePlatformTestCase() {
     }
 
     // getVariants tests - without dbt project, should return empty
+    @RequiresReadLock
     fun testGetVariantsReturnsEmptyWithoutDbtProject() {
         val ref = createRefReference("{{ ref('stg_customers') }}")
         if (ref != null) {

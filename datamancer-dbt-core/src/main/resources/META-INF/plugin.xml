@@ -73,8 +73,9 @@
         <!-- Startup activity: initial manifest scan after smart mode -->
         <postStartupActivity implementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestStartupActivity"/>
 
-        <!-- VFS listener: reloads manifest when target/manifest.json changes on disk -->
-        <vfs.asyncListener implementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestFileListener"/>
+        <!-- VFS listener: reloads manifest when target/manifest.json changes on disk (off-EDT) -->
+        <vfs.asyncListenerBackgroundable
+                implementation="com.github.joshuataylor.datamancer.dbtcore.manifest.DatamancerManifestFileListener"/>
 
         <!-- Column documentation hover support from YAML schema files -->
         <platform.backend.documentation.targetProvider

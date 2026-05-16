@@ -3,6 +3,7 @@ package com.github.joshuataylor.datamancer.dbtcore.documentation
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DatamancerMacroDocumentationTarget.
@@ -20,7 +21,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
     // -- computePresentation --
 
     fun testComputePresentationContainsMacroName() {
-        val target = createTarget(macroName = "testf")
+        val target = createTarget()
         val presentation = target.computePresentation()
         assertNotNull(presentation)
         assertTrue(
@@ -30,7 +31,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
     }
 
     fun testComputePresentationContainsEmptyParens() {
-        val target = createTarget(macroName = "testf", parameters = emptyList())
+        val target = createTarget(parameters = emptyList())
         val presentation = target.computePresentation()
         assertEquals("testf()", presentation.presentableText)
     }
@@ -53,7 +54,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
     // -- computeDocumentation: definition section --
 
     fun testDocumentationContainsMacroName() {
-        val target = createTarget(macroName = "testf")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain macro name", html!!.contains("testf"))
@@ -85,7 +86,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
     // -- computeDocumentation: content section --
 
     fun testDocumentationContainsFilePath() {
-        val target = createTarget(macroFilePath = "macros/testf.sql")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain file path", html!!.contains("macros/testf.sql"))
@@ -131,7 +132,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
     // -- navigatable --
 
     fun testNavigatableIsNullWithoutTargetElement() {
-        val target = createTarget(targetElement = null)
+        val target = createTarget()
         assertNull("Should return null navigatable without target element", target.navigatable)
     }
 
@@ -143,6 +144,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull(pointer)
     }
 
+    @RequiresReadLock
     fun testPointerDereferenceReturnsTarget() {
         val target = createTarget()
         val pointer = target.createPointer()
@@ -150,6 +152,7 @@ class DatamancerMacroDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull("Dereferenced pointer should return a target", dereferenced)
     }
 
+    @RequiresReadLock
     fun testPointerDereferencedTargetHasSamePresentation() {
         val target = createTarget(macroName = "testf2", parameters = listOf("hello"))
         val pointer = target.createPointer()

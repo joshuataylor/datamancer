@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.services.DbtBuiltinDocumentationS
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for [DatamancerBuiltinDocumentationTarget].
@@ -21,7 +22,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
     // -- computePresentation --
 
     fun testComputePresentationContainsFunctionName() {
-        val target = createTarget(functionName = "ref")
+        val target = createTarget()
         val presentation = target.computePresentation()
         assertNotNull(presentation)
         assertTrue(
@@ -32,8 +33,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
 
     fun testParameterisedPresentationContainsParentheses() {
         val target = createTarget(
-            functionName = "ref",
-            doc = createDoc(functionName = "ref", isParameterised = true, parameterNames = listOf("model_name"))
+            doc = createDoc(parameterNames = listOf("model_name"))
         )
         val presentation = target.computePresentation()
         assertEquals("ref(model_name)", presentation.presentableText)
@@ -44,7 +44,6 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
             functionName = "source",
             doc = createDoc(
                 functionName = "source",
-                isParameterised = true,
                 parameterNames = listOf("source_name", "table_name")
             )
         )
@@ -64,7 +63,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
     // -- computeDocumentation: definition section --
 
     fun testDocumentationContainsFunctionName() {
-        val target = createTarget(functionName = "ref")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain function name", html!!.contains("ref"))
@@ -120,7 +119,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
 
     fun testSignatureLinksToExternalDocs() {
         val target = createTarget(
-            doc = createDoc(externalDocUrl = "https://docs.getdbt.com/reference/dbt-jinja-functions/ref")
+            doc = createDoc()
         )
         val html = getDocumentationHtml(target)
         assertNotNull(html)
@@ -139,7 +138,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
 
     fun testContentSectionContainsDocLinkAtTop() {
         val target = createTarget(
-            doc = createDoc(externalDocUrl = "https://docs.getdbt.com/reference/dbt-jinja-functions/ref")
+            doc = createDoc()
         )
         val html = getDocumentationHtml(target)
         assertNotNull(html)
@@ -168,6 +167,7 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull(pointer)
     }
 
+    @RequiresReadLock
     fun testPointerDereferenceReturnsTarget() {
         val target = createTarget()
         val pointer = target.createPointer()
@@ -175,10 +175,10 @@ class DatamancerBuiltinDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull("Dereferenced pointer should return a target", dereferenced)
     }
 
+    @RequiresReadLock
     fun testPointerDereferencedTargetHasSamePresentation() {
         val target = createTarget(
-            functionName = "ref",
-            doc = createDoc(functionName = "ref", isParameterised = true, parameterNames = listOf("model_name"))
+            doc = createDoc(parameterNames = listOf("model_name"))
         )
         val pointer = target.createPointer()
         val dereferenced = pointer.dereference()

@@ -7,16 +7,16 @@ import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfigStore
 import com.github.joshuataylor.datamancer.core.workspace.setDbtConfig
 import com.intellij.database.dataSource.LocalDataSourceManager
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -47,12 +47,8 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
     private val modifiedConfigs: MutableMap<String, DatamancerProjectConfig> = mutableMapOf()
 
     // UI components
-    private val showProjectIconCheckbox = javax.swing.JCheckBox("Show dbt project icon in project view").apply {
-        toolTipText = "Display a custom icon on directories that are dbt project roots"
-    }
-    private val showRunGutterIconCheckbox = javax.swing.JCheckBox("Show run gutter icon for dbt models").apply {
-        toolTipText = "Display a run icon in the editor gutter for dbt model SQL files"
-    }
+    private val showProjectIconCheckbox = javax.swing.JCheckBox("Show dbt project icon in project view")
+    private val showRunGutterIconCheckbox = javax.swing.JCheckBox("Show run gutter icon for dbt models")
     private val projectSelector: ComboBox<String> = ComboBox<String>()
     private val profileDirectoryField = JBTextField()
     private val defaultTargetField = JBTextField()
@@ -60,14 +56,11 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
     private val queryLimitField = JBTextField()
     private val envVarsComponent = EnvironmentVariablesComponent()
     private val excludedDirectoriesField = JBTextField()
-    private val useMiseCheckbox = javax.swing.JCheckBox("Use mise environment variables").apply {
-        toolTipText = "Inject environment variables from mise when compiling dbt models"
-    }
+    private val useMiseCheckbox = javax.swing.JCheckBox("Use mise environment variables")
 
     private val misePluginAvailable: Boolean by lazy {
-        val pluginId = PluginId.findId("com.github.l34130.mise") ?: return@lazy false
-        val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return@lazy false
-        descriptor.isEnabled
+        val pluginId = PluginId.getId("com.github.l34130.mise")
+        PluginManagerCore.getPlugin(pluginId) != null && !PluginManagerCore.isDisabled(pluginId)
     }
 
     private var panel: DialogPanel? = null
@@ -124,17 +117,15 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
             group("Appearance") {
                 row {
                     cell(showProjectIconCheckbox)
+                        .comment("Marks dbt project root directories with a custom icon")
                 }
                 row {
                     cell(showRunGutterIconCheckbox)
+                        .comment("Adds a run action in the gutter for dbt model files")
                 }
             }
 
             group("dbt Projects") {
-                row {
-                    comment("Configure settings for each discovered dbt project")
-                }
-
                 if (modifiedConfigs.isEmpty()) {
                     row {
                         label("No dbt projects discovered. Click 'Refresh Projects' to scan.")
@@ -173,25 +164,25 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                     row("Profile Directory:") {
                         cell(profileDirectoryField)
                             .align(AlignX.FILL)
-                            .comment("Optional: Path to dbt profiles directory")
+                            .comment("Overrides ~/.dbt/ for profile resolution")
                     }
 
                     row("Default Target:") {
                         cell(defaultTargetField)
                             .align(AlignX.FILL)
-                            .comment("Optional: Default dbt target (e.g., dev, prod)")
+                            .comment("Used when no --target is specified (e.g., dev, prod)")
                     }
 
                     row("Default Data Source:") {
                         cell(dataSourceCombo)
                             .align(AlignX.FILL)
-                            .comment("Database connection to use for queries")
+                            .comment("IDE database connection for running queries and previews")
                     }
 
                     row("Query Limit:") {
                         cell(queryLimitField)
                             .columns(10)
-                            .comment("Default row limit for query results")
+                            .comment("Maximum rows returned when previewing query results")
                             .validationOnApply {
                                 val value = it.text.toIntOrNull()
                                 if (value == null || value <= 0) {
@@ -202,7 +193,7 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                             }
                     }
 
-                    row {
+                    row("Environment Variables:") {
                         cell(envVarsComponent)
                             .align(AlignX.FILL)
                     }.layout(RowLayout.PARENT_GRID)
@@ -210,13 +201,13 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                     row("Excluded Directories:") {
                         cell(excludedDirectoriesField)
                             .align(AlignX.FILL)
-                            .comment("Comma-separated directory names to exclude from indexing (relative to project root)")
+                            .comment("Comma-separated, relative to project root. Defaults: target, logs, dbt_packages")
                     }
 
                     if (misePluginAvailable) {
                         row {
                             cell(useMiseCheckbox)
-                                .comment("Requires the Mise plugin to be installed and enabled")
+                                .comment("Injects mise-managed variables when compiling models")
                         }
                     }
                 }
@@ -265,7 +256,7 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                             ).addAction(settingsAction).notify(project)
                         }
                     }
-                    comment("Re-scan the project for dbt_project.yml files")
+                    comment("Re-scan for dbt_project.yml files")
                 }
             }
         }.also { panel = it }
@@ -349,7 +340,7 @@ class ProjectSettingsConfigurable(private val project: Project) : BoundSearchabl
                     log.warn("Could not find module entity for: $moduleName")
                 }
             }
-            log.debug("Applied ${appliedCount} dbt project configurations")
+            log.debug("Applied $appliedCount dbt project configurations")
         }
 
         // Re-apply directory exclusions for any projects where the list changed

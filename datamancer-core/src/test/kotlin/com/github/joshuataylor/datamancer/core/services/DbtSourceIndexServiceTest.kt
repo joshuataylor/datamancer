@@ -1,6 +1,7 @@
 package com.github.joshuataylor.datamancer.core.services
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DbtSourceIndexService.
@@ -71,6 +72,7 @@ class DbtSourceIndexServiceTest : BasePlatformTestCase() {
     }
 
     // Empty project tests
+    @RequiresReadLock
     fun testGetAllSourcesWithNoSources() {
         val service = DbtSourceIndexService.getInstance(project)
         val sources = service.getAllSources()
@@ -78,18 +80,21 @@ class DbtSourceIndexServiceTest : BasePlatformTestCase() {
         assertTrue("Should return empty map when no sources", sources.isEmpty())
     }
 
+    @RequiresReadLock
     fun testFindSourceByNameNotFound() {
         val service = DbtSourceIndexService.getInstance(project)
         val source = service.findSource("nonexistent_source")
         assertNull("Should return null for nonexistent source", source)
     }
 
+    @RequiresReadLock
     fun testFindSourceTableNotFound() {
         val service = DbtSourceIndexService.getInstance(project)
         val table = service.findSourceTable("nonexistent_source", "nonexistent_table")
         assertNull("Should return null for nonexistent source/table", table)
     }
 
+    @RequiresReadLock
     fun testGetAllSourceNamesEmpty() {
         val service = DbtSourceIndexService.getInstance(project)
         val names = service.getAllSourceNames()
@@ -97,6 +102,7 @@ class DbtSourceIndexServiceTest : BasePlatformTestCase() {
         assertTrue("Should return empty list when no sources", names.isEmpty())
     }
 
+    @RequiresReadLock
     fun testGetTableNamesForNonexistentSource() {
         val service = DbtSourceIndexService.getInstance(project)
         val tables = service.getTableNames("nonexistent_source")
@@ -134,18 +140,21 @@ class DbtSourceIndexServiceTest : BasePlatformTestCase() {
     }
 
     // Edge cases
+    @RequiresReadLock
     fun testFindSourceWithEmptyName() {
         val service = DbtSourceIndexService.getInstance(project)
         val source = service.findSource("")
         assertNull("Should return null for empty source name", source)
     }
 
+    @RequiresReadLock
     fun testFindSourceTableWithEmptyNames() {
         val service = DbtSourceIndexService.getInstance(project)
         val table = service.findSourceTable("", "")
         assertNull("Should return null for empty names", table)
     }
 
+    @RequiresReadLock
     fun testGetTableNamesWithEmptySource() {
         val service = DbtSourceIndexService.getInstance(project)
         val tables = service.getTableNames("")

@@ -108,7 +108,7 @@ class DatamancerDbtProjectIndexService(
             }
 
             val newSize = dbtProjectsByModule.size
-            log.debug("Index updated: ${newSize} dbt projects (was: ${previousSize})")
+            log.debug("Index updated: $newSize dbt projects (was: ${previousSize})")
         }
     }
 

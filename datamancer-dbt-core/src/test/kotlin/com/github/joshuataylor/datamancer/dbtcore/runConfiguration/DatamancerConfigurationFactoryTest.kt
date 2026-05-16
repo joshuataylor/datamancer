@@ -38,10 +38,7 @@ class DatamancerConfigurationFactoryTest : BasePlatformTestCase() {
     }
 
     fun testGetOptionsClassReturnsCorrectClass() {
-        assertEquals(
-            DatamancerRunConfigurationOptions::class.java,
-            createFactory().optionsClass
-        )
+        assertSame(DatamancerRunConfigurationOptions::class.java, createFactory().optionsClass)
     }
 
     fun testCreateTemplateConfigurationHasDefaultName() {

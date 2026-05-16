@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 /**
  * Handles the execution of queries in an IntelliJ platform plugin.
@@ -58,6 +59,7 @@ class DatamancerQueryExecutor(
      * @param editor the editor from which the query execution is triggered
      * @throws IllegalStateException if module or data source cannot be determined
      */
+    @RequiresBackgroundThread
     fun executeQuery(
         virtualFile: VirtualFile,
         editor: Editor,

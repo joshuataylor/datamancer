@@ -138,8 +138,7 @@ class DbtVarIndexService(private val project: Project) {
                     name = keyText,
                     value = keyValue.valueText,
                     psiElement = keyValue,
-                    file = virtualFile,
-                    scope = null
+                    file = virtualFile
                 )
                 vars.add(varDef)
             }

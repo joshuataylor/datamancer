@@ -17,9 +17,8 @@ object DatamancerMiseIntegration {
      * Whether the mise plugin is installed and enabled.
      */
     fun isMisePluginAvailable(): Boolean {
-        val pluginId = PluginId.findId(MISE_PLUGIN_ID) ?: return false
-        val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
-        return descriptor.isEnabled
+        val pluginId = PluginId.getId(MISE_PLUGIN_ID)
+        return PluginManagerCore.isLoaded(pluginId)
     }
 
     /**

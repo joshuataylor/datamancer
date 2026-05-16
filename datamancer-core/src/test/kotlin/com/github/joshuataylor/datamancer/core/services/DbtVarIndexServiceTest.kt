@@ -1,6 +1,7 @@
 package com.github.joshuataylor.datamancer.core.services
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DbtVarIndexService.
@@ -59,6 +60,7 @@ class DbtVarIndexServiceTest : BasePlatformTestCase() {
     }
 
     // Empty project tests
+    @RequiresReadLock
     fun testGetAllVarsWithNoVars() {
         val service = DbtVarIndexService.getInstance(project)
         val vars = service.getAllVars()
@@ -66,12 +68,14 @@ class DbtVarIndexServiceTest : BasePlatformTestCase() {
         assertTrue("Should return empty map when no vars", vars.isEmpty())
     }
 
+    @RequiresReadLock
     fun testFindVarByNameNotFound() {
         val service = DbtVarIndexService.getInstance(project)
         val varDef = service.findVar("nonexistent_var")
         assertNull("Should return null for nonexistent var", varDef)
     }
 
+    @RequiresReadLock
     fun testGetAllVarNamesEmpty() {
         val service = DbtVarIndexService.getInstance(project)
         val names = service.getAllVarNames()
@@ -96,6 +100,7 @@ class DbtVarIndexServiceTest : BasePlatformTestCase() {
     }
 
     // Edge cases
+    @RequiresReadLock
     fun testFindVarWithEmptyName() {
         val service = DbtVarIndexService.getInstance(project)
         val varDef = service.findVar("")

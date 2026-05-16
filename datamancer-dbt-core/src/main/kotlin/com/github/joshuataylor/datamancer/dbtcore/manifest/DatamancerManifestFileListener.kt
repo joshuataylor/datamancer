@@ -9,7 +9,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 
 /**
- * Async VFS listener that reloads manifest.json whenever it changes or is created on disk.
+ * Background-capable async VFS listener that reloads manifest.json whenever it changes or
+ * is created on disk.
+ *
+ * Registered via `vfs.asyncListenerBackgroundable` so callbacks run off-EDT, avoiding UI
+ * freezes during heavy file operations. All operations here are thread-safe (ConcurrentHashMap
+ * reads and coroutine launches).
  *
  * Watches for events on files named `manifest.json` inside a `target/` directory that
  * belongs to a known dbt project root. On a match, triggers a reload of the cached manifest

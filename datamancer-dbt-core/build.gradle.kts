@@ -45,7 +45,6 @@ intellijPlatform {
             listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" })
         }
     }
-
 }
 
 tasks {

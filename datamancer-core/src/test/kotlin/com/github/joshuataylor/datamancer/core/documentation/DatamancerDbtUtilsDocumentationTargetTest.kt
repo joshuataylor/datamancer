@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.services.DbtBuiltinDocumentationS
 import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for [DatamancerDbtUtilsDocumentationTarget].
@@ -21,7 +22,7 @@ class DatamancerDbtUtilsDocumentationTargetTest : BasePlatformTestCase() {
     // -- computePresentation --
 
     fun testComputePresentationContainsQualifiedName() {
-        val target = createTarget(packageName = "dbt_utils", functionName = "star")
+        val target = createTarget(functionName = "star")
         val presentation = target.computePresentation()
         assertNotNull(presentation)
         assertTrue(
@@ -61,7 +62,7 @@ class DatamancerDbtUtilsDocumentationTargetTest : BasePlatformTestCase() {
     }
 
     fun testDocumentationContainsPackageName() {
-        val target = createTarget(packageName = "dbt_utils")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain package name", html!!.contains("dbt_utils"))
@@ -165,6 +166,7 @@ class DatamancerDbtUtilsDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull(pointer)
     }
 
+    @RequiresReadLock
     fun testPointerDereferenceReturnsTarget() {
         val target = createTarget()
         val pointer = target.createPointer()
@@ -172,6 +174,7 @@ class DatamancerDbtUtilsDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull("Dereferenced pointer should return a target", dereferenced)
     }
 
+    @RequiresReadLock
     fun testPointerDereferencedTargetHasSamePresentation() {
         val target = createTarget(
             functionName = "star",

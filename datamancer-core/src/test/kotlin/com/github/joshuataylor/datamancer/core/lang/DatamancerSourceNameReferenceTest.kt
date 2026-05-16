@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DbtSourceNameReference.
@@ -69,6 +70,7 @@ class DatamancerSourceNameReferenceTest : BasePlatformTestCase() {
     }
 
     // getVariants tests - without dbt project, should return empty
+    @RequiresReadLock
     fun testGetVariantsReturnsEmptyWithoutDbtProject() {
         val ref = createSourceNameReference("{{ source('raw_data', 'customers') }}")
         if (ref != null) {

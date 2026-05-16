@@ -5,6 +5,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLScalar
 
@@ -83,6 +84,7 @@ class DatamancerYamlColumnReferenceTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testResolveReturnsNullWithoutModel() {
         val ref = createColumnReference("customers", "customer_id")
         if (ref != null) {

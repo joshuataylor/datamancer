@@ -44,8 +44,7 @@ class DatamancerProjectConfigTest : BasePlatformTestCase() {
 
     fun testCopyWithModifications() {
         val original = DatamancerProjectConfig(
-            projectRoot = "/test/path",
-            queryLimit = 1000
+            projectRoot = "/test/path"
         )
 
         val modified = original.copy(

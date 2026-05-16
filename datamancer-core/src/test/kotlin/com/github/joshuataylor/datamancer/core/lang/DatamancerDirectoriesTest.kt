@@ -1,6 +1,7 @@
 package com.github.joshuataylor.datamancer.core.lang
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DbtDirectories.
@@ -49,6 +50,7 @@ class DbtDirectoriesTest : BasePlatformTestCase() {
     }
 
     // Empty project tests - no dbt configs registered
+    @RequiresReadLock
     fun testFindModelReturnsNullWithoutDbtProject() {
         val result = DbtDirectories.findModel(project, "stg_customers")
         assertNull("Should return null when no dbt project configured", result)
@@ -59,6 +61,7 @@ class DbtDirectoriesTest : BasePlatformTestCase() {
         assertNull("Should return null when no dbt project configured", result)
     }
 
+    @RequiresReadLock
     fun testFindAllModelsReturnsEmptyWithoutDbtProject() {
         val result = DbtDirectories.findAllModels(project)
         assertNotNull(result)
@@ -72,18 +75,21 @@ class DbtDirectoriesTest : BasePlatformTestCase() {
     }
 
     // getModelNameFromFile tests
+    @RequiresReadLock
     fun testGetModelNameFromFileExtractsName() {
         val psiFile = myFixture.configureByText("stg_customers.sql", "SELECT 1")
         val name = DbtDirectories.getModelNameFromFile(psiFile)
         assertEquals("stg_customers", name)
     }
 
+    @RequiresReadLock
     fun testGetModelNameFromFileWithUnderscores() {
         val psiFile = myFixture.configureByText("stg_my_model_v2.sql", "SELECT 1")
         val name = DbtDirectories.getModelNameFromFile(psiFile)
         assertEquals("stg_my_model_v2", name)
     }
 
+    @RequiresReadLock
     fun testGetModelNameFromFileWithDashes() {
         val psiFile = myFixture.configureByText("my-model-name.sql", "SELECT 1")
         val name = DbtDirectories.getModelNameFromFile(psiFile)
@@ -135,6 +141,7 @@ class DbtDirectoriesTest : BasePlatformTestCase() {
     }
 
     // Multiple calls tests
+    @RequiresReadLock
     fun testMultipleCallsToFindAllModels() {
         val result1 = DbtDirectories.findAllModels(project)
         val result2 = DbtDirectories.findAllModels(project)
@@ -150,6 +157,7 @@ class DbtDirectoriesTest : BasePlatformTestCase() {
     }
 
     // Test that searching for nonexistent models returns null
+    @RequiresReadLock
     fun testFindModelWithNonexistentModel() {
         val result = DbtDirectories.findModel(project, "this_model_does_not_exist_anywhere")
         assertNull(result)

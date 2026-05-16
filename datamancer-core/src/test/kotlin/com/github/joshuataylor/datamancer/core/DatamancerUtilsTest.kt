@@ -4,6 +4,7 @@ import com.intellij.jinja.psi.Jinja2StringLiteral
 import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Tests for DatamancerUtils.
@@ -67,6 +68,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // getReferencedName tests
+    @RequiresReadLock
     fun testGetReferencedNameWithSingleQuotes() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref('stg_customers') }}")
         if (call != null) {
@@ -75,6 +77,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetReferencedNameWithNoArguments() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref() }}")
         if (call != null) {
@@ -84,6 +87,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // getStringArguments tests
+    @RequiresReadLock
     fun testGetStringArgumentsWithOneArg() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref('model') }}")
         if (call != null) {
@@ -93,6 +97,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetStringArgumentsWithTwoArgs() {
         val call = createJinjaFileAndGetFunctionCall("{{ source('schema', 'table') }}")
         if (call != null) {
@@ -103,6 +108,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetStringArgumentsWithNoArgs() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref() }}")
         if (call != null) {
@@ -112,6 +118,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // getSourceArguments tests
+    @RequiresReadLock
     fun testGetSourceArgumentsWithValidSource() {
         val call = createJinjaFileAndGetFunctionCall("{{ source('raw_data', 'customers') }}")
         if (call != null) {
@@ -122,6 +129,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetSourceArgumentsWithOneArg() {
         val call = createJinjaFileAndGetFunctionCall("{{ source('raw_data') }}")
         if (call != null) {
@@ -131,6 +139,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // getStringLiteralArguments tests
+    @RequiresReadLock
     fun testGetStringLiteralArgumentsReturnsElements() {
         val call = createJinjaFileAndGetFunctionCall("{{ source('schema', 'table') }}")
         if (call != null) {
@@ -140,6 +149,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetStringLiteralArgumentsPreservesOrder() {
         val call = createJinjaFileAndGetFunctionCall("{{ source('first', 'second') }}")
         if (call != null) {
@@ -151,6 +161,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
         }
     }
 
+    @RequiresReadLock
     fun testGetStringLiteralArgumentsEmptyForNoArgs() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref() }}")
         if (call != null) {
@@ -160,6 +171,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // Edge cases
+    @RequiresReadLock
     fun testStringArgumentsWithSpecialCharacters() {
         val call = createJinjaFileAndGetFunctionCall("{{ ref('stg_my-model_v2') }}")
         if (call != null) {
@@ -170,6 +182,7 @@ class DatamancerUtilsTest : BasePlatformTestCase() {
     }
 
     // Additional behavioural tests that don't require Jinja2 PSI
+    @RequiresReadLock
     fun testGetJinjaCallReturnsNullForNonJinjaElement() {
         val psiFile = myFixture.configureByText("test.txt", "plain text content")
         val element = psiFile.firstChild

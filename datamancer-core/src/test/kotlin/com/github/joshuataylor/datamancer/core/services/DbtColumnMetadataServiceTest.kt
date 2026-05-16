@@ -1,6 +1,7 @@
 package com.github.joshuataylor.datamancer.core.services
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLFile
 
 /**
@@ -29,6 +30,7 @@ class DbtColumnMetadataServiceTest : BasePlatformTestCase() {
 
     // -- Empty project tests --
 
+    @RequiresReadLock
     fun testGetAllModelsWithNoModels() {
         val service = DbtColumnMetadataService.getInstance(project)
         val models = service.getAllModels()

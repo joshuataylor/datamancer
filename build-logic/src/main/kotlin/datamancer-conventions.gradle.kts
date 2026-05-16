@@ -89,3 +89,4 @@ val runRubyMine by intellijPlatformTesting.runIde.registering {
     type = IntelliJPlatformType.RubyMine
     version = providers.gradleProperty("rubyminePlatformVersion")
 }
+

@@ -4,6 +4,7 @@ import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLFile
 
 /**
@@ -22,14 +23,14 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     // -- computePresentation --
 
     fun testComputePresentationContainsColumnName() {
-        val target = createTarget(columnName = "customer_id", columnDataType = null)
+        val target = createTarget()
         val presentation = target.computePresentation()
         assertNotNull(presentation)
         assertEquals("customer_id", presentation.presentableText)
     }
 
     fun testComputePresentationContainsDataType() {
-        val target = createTarget(columnName = "customer_id", columnDataType = "text")
+        val target = createTarget(columnDataType = "text")
         val presentation = target.computePresentation()
         assertNotNull(presentation)
         assertEquals("customer_id: text", presentation.presentableText)
@@ -38,14 +39,14 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     // -- computeDocumentation: definition section --
 
     fun testDocumentationContainsModelName() {
-        val target = createTarget(modelName = "stg_customers")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain model name", html!!.contains("stg_customers"))
     }
 
     fun testDocumentationContainsColumnName() {
-        val target = createTarget(columnName = "customer_id")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain column name", html!!.contains("customer_id"))
@@ -59,14 +60,14 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     }
 
     fun testDocumentationContainsDataType() {
-        val target = createTarget(columnName = "customer_id", columnDataType = "text")
+        val target = createTarget(columnDataType = "text")
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain data type", html!!.contains("text"))
     }
 
     fun testDocumentationOmitsDataTypeWhenNull() {
-        val target = createTarget(columnName = "customer_id", columnDataType = null)
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         // Should not contain the ": " separator that appears before a data type
@@ -80,14 +81,14 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     // -- computeDocumentation: content section --
 
     fun testDocumentationContainsDescription() {
-        val target = createTarget(columnDescription = "Unique customer identifier")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain description text", html!!.contains("Unique customer identifier"))
     }
 
     fun testDocumentationDescriptionIsNotGrayed() {
-        val target = createTarget(columnDescription = "Unique customer identifier")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         // The description text should not be wrapped in a grayed element.
@@ -99,14 +100,14 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     }
 
     fun testDocumentationDescriptionHasNoSqlCommentPrefix() {
-        val target = createTarget(columnDescription = "Unique customer identifier")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertFalse("Should not prefix description with --", html!!.contains("-- Unique customer identifier"))
     }
 
     fun testDocumentationModelNameIsGrayed() {
-        val target = createTarget(modelName = "stg_customers")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Model info should use grayed styling", html!!.contains("grayed"))
@@ -114,7 +115,7 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     }
 
     fun testDocumentationDefinedInIsGrayed() {
-        val target = createTarget(schemaFilePath = "dbt/models/staging/schema.yml")
+        val target = createTarget()
         val html = getDocumentationHtml(target)
         assertNotNull(html)
         assertTrue("Should contain Defined in: prefix", html!!.contains("Defined in: dbt/models/staging/schema.yml"))
@@ -183,7 +184,7 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
     // -- navigatable --
 
     fun testNavigatableIsNullWithoutYamlElement() {
-        val target = createTarget(yamlElement = null)
+        val target = createTarget()
         assertNull("Should return null navigatable without YAML element", target.navigatable)
     }
 
@@ -204,6 +205,7 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull(pointer)
     }
 
+    @RequiresReadLock
     fun testPointerDereferenceReturnsTarget() {
         val target = createTarget()
         val pointer = target.createPointer()
@@ -211,8 +213,9 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
         assertNotNull("Dereferenced pointer should return a target", dereferenced)
     }
 
+    @RequiresReadLock
     fun testPointerDereferencedTargetHasSamePresentation() {
-        val target = createTarget(columnName = "order_id", columnDataType = null)
+        val target = createTarget(columnName = "order_id")
         val pointer = target.createPointer()
         val dereferenced = pointer.dereference()
         assertNotNull(dereferenced)
@@ -222,6 +225,7 @@ class DatamancerColumnDocumentationTargetTest : BasePlatformTestCase() {
         )
     }
 
+    @RequiresReadLock
     fun testPointerDereferencedTargetPreservesDataType() {
         val target = createTarget(columnName = "order_id", columnDataType = "integer")
         val pointer = target.createPointer()
