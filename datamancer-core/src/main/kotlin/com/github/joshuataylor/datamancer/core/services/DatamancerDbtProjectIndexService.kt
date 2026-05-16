@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
+import com.intellij.openapi.application.UI
 
 /**
  * Service that maintains an index of dbt projects for efficient lookups.
@@ -57,7 +58,7 @@ class DatamancerDbtProjectIndexService(
             // Without this, subdirectory dbt project icons may not appear because the tree
             // rendered before the index was populated.
             if (dbtProjectsByModule.isNotEmpty()) {
-                withContext(Dispatchers.EDT) {
+                withContext(Dispatchers.UI) {
                     ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
                 }
             }

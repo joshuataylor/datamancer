@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import com.intellij.openapi.application.UI
 
 /**
  * Action that writes comprehensive debug information to a file.
@@ -51,7 +52,7 @@ class DatamancerDebugAction : AnAction() {
 
             val outputFile = writeDebugFile(project, debugInfo)
 
-            withContext(Dispatchers.EDT) {
+            withContext(Dispatchers.UI) {
                 if (outputFile != null) {
                     showSuccessNotification(project, outputFile)
                 } else {
