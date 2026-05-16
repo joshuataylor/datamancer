@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 
 /**
@@ -47,7 +49,9 @@ class DatamancerGoToYamlDefinitionAction : AnAction() {
             return
         }
 
-        val module = ModuleUtil.findModuleForFile(virtualFile, project)
+        val module = ReadAction.nonBlocking<Module?> {
+            ModuleUtil.findModuleForFile(virtualFile, project)
+        }.executeSynchronously()
         if (module == null) {
             event.presentation.isEnabledAndVisible = false
             return
