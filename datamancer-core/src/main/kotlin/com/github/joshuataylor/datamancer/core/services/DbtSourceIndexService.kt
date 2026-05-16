@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirec
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -77,6 +78,7 @@ class DbtSourceIndexService(private val project: Project) {
         val psiManager = PsiManager.getInstance(project)
 
         for (virtualFile in yamlFiles) {
+            ProgressManager.checkCanceled()
             // Only process files in dbt project directories
             if (!isInDbtProject(virtualFile, allConfigs)) {
                 continue
@@ -85,6 +87,7 @@ class DbtSourceIndexService(private val project: Project) {
             val psiFile = psiManager.findFile(virtualFile) as? YAMLFile ?: continue
             val fileSources = parseSourcesFromYaml(psiFile, virtualFile)
             for (source in fileSources) {
+                ProgressManager.checkCanceled()
                 sources[source.name] = source
             }
         }

@@ -2,6 +2,7 @@ package com.github.joshuataylor.datamancer.core.lang
 
 import com.github.joshuataylor.datamancer.core.DatamancerUtils
 import com.intellij.jinja.tags.Jinja2FunctionCall
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
@@ -37,9 +38,11 @@ class DbtYamlSourceUsageReference(
         val results = mutableListOf<ResolveResult>()
 
         for (modelFile in allModels) {
+            ProgressManager.checkCanceled()
             val sourceCalls = PsiTreeUtil.collectElementsOfType(modelFile, Jinja2FunctionCall::class.java)
 
             for (call in sourceCalls) {
+                ProgressManager.checkCanceled()
                 if (!DatamancerUtils.isSourceCall(call)) continue
 
                 val args = DatamancerUtils.getSourceArguments(call) ?: continue

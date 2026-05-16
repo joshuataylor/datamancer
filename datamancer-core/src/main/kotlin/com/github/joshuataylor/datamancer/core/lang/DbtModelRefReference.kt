@@ -3,6 +3,7 @@ package com.github.joshuataylor.datamancer.core.lang
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.jinja.psi.Jinja2StringLiteral
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
@@ -84,6 +85,7 @@ class DbtModelRefReference(
         // Add all SQL models (except current file)
         val models = DbtDirectories.findAllModels(project)
         for (model in models) {
+            ProgressManager.checkCanceled()
             if (model.virtualFile == currentFile) continue
 
             val name = DbtDirectories.getModelNameFromFile(model)
@@ -99,6 +101,7 @@ class DbtModelRefReference(
         // Add all CSV seeds
         val seeds = DbtDirectories.findAllSeeds(project)
         for (seed in seeds) {
+            ProgressManager.checkCanceled()
             val name = DbtDirectories.getSeedNameFromFile(seed)
             val lookupElement = LookupElementBuilder
                 .create(name)

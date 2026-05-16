@@ -2,6 +2,7 @@ package com.github.joshuataylor.datamancer.core.services
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -68,12 +69,14 @@ class DbtVarIndexService(private val project: Project) {
         val vfsManager = VirtualFileManager.getInstance()
 
         for ((_, config) in allConfigs) {
+            ProgressManager.checkCanceled()
             val dbtProjectPath = "${config.projectRoot}/$DBT_PROJECT_FILE"
             val virtualFile = vfsManager.findFileByUrl("file://$dbtProjectPath") ?: continue
             val psiFile = psiManager.findFile(virtualFile) as? YAMLFile ?: continue
 
             val fileVars = parseVarsFromYaml(psiFile, virtualFile)
             for (varDef in fileVars) {
+                ProgressManager.checkCanceled()
                 vars[varDef.name] = varDef
             }
         }

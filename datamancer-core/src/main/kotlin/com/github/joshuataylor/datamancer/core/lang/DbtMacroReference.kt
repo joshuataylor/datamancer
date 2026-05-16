@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.services.DbtMacroIndexService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
@@ -74,6 +75,7 @@ class DbtMacroReference(
 
         val allMacros = macroIndexService.getAllMacros()
         for ((name, macroDef) in allMacros) {
+            ProgressManager.checkCanceled()
             val paramsText = if (macroDef.parameters.isNotEmpty()) {
                 "(${macroDef.parameters.joinToString(", ")})"
             } else {

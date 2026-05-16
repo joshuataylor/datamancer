@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.services.DbtSourceIndexService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.jinja.psi.Jinja2StringLiteral
 import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.openapi.util.TextRange
@@ -47,6 +48,7 @@ class DbtSourceNameReference(
 
         val sourceNames = sourceIndexService.getAllSourceNames()
         for (name in sourceNames) {
+            ProgressManager.checkCanceled()
             val lookupElement = LookupElementBuilder
                 .create(name)
                 .withIcon(AllIcons.Nodes.DataSchema)

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
@@ -48,6 +49,7 @@ object DbtDirectories {
 
         // Search through each dbt project's models directory
         for ((_, config) in allConfigs) {
+            ProgressManager.checkCanceled()
             val modelsPath = "${config.projectRoot}/models"
             val modelsDir = vfm.findFileByUrl("file://$modelsPath") ?: continue
 
@@ -117,6 +119,7 @@ object DbtDirectories {
         val vfm = VirtualFileManager.getInstance()
 
         for ((_, config) in allConfigs) {
+            ProgressManager.checkCanceled()
             val modelsPath = "${config.projectRoot}/models"
             val modelsDir = vfm.findFileByUrl("file://$modelsPath") ?: continue
 
@@ -124,6 +127,7 @@ object DbtDirectories {
             collectSqlFiles(modelsDir, sqlFiles)
 
             for (virtualFile in sqlFiles) {
+                ProgressManager.checkCanceled()
                 psiManager.findFile(virtualFile)?.let { models.add(it) }
             }
         }

@@ -4,6 +4,7 @@ import com.github.joshuataylor.datamancer.core.workspace.DatamancerExcludedDirec
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfig
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -105,6 +106,7 @@ class DbtColumnMetadataService(private val project: Project) {
         val psiManager = PsiManager.getInstance(project)
 
         for (virtualFile in yamlFiles) {
+            ProgressManager.checkCanceled()
             if (!isInDbtProject(virtualFile, allConfigs)) {
                 continue
             }
@@ -112,6 +114,7 @@ class DbtColumnMetadataService(private val project: Project) {
             val psiFile = psiManager.findFile(virtualFile) as? YAMLFile ?: continue
             val fileModels = parseModelsFromYaml(psiFile, virtualFile)
             for (model in fileModels) {
+                ProgressManager.checkCanceled()
                 models[model.name] = model
             }
         }
@@ -142,6 +145,7 @@ class DbtColumnMetadataService(private val project: Project) {
         val modelsSequence = modelsKeyValue.value as? YAMLSequence ?: return models
 
         for (modelItem in modelsSequence.items) {
+            ProgressManager.checkCanceled()
             val modelMapping = modelItem.value as? YAMLMapping ?: continue
             val modelMetadata = parseModelMetadata(modelMapping, virtualFile)
             if (modelMetadata != null) {
