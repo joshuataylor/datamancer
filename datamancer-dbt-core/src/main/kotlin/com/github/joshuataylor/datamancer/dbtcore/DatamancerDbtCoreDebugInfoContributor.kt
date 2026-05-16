@@ -7,7 +7,10 @@ import com.github.joshuataylor.datamancer.dbtcore.mise.DatamancerMiseIntegration
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -25,6 +28,9 @@ import java.nio.charset.StandardCharsets
  * - dbt version (queried from the installed dbt package)
  * - Mise plugin status and project-level toggle
  * - Loaded manifest details per project root
+ *
+ * May be called from a background thread (Dispatchers.IO). Model and SDK
+ * access is wrapped in read actions where needed.
  */
 class DatamancerDbtCoreDebugInfoContributor : DatamancerDebugInfoContributor {
 
@@ -46,45 +52,65 @@ class DatamancerDbtCoreDebugInfoContributor : DatamancerDebugInfoContributor {
         }
     }
 
+    /**
+     * Data collected under a read action for the Python SDK section.
+     */
+    private data class SdkInfoData(
+        val projectSdkName: String?,
+        val projectSdkPath: String?,
+        val projectSdkVersion: String?,
+        val isPythonSdk: Boolean,
+        val moduleSdks: List<Triple<String, String, String?>>,
+        val allPythonSdks: List<Pair<String, String?>>,
+    )
+
     private fun appendPythonSdkInfo(project: Project, builder: StringBuilder) {
         builder.appendLine("Python SDK:")
 
-        // Project-level SDK
-        val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-        if (projectSdk != null && projectSdk.sdkType is PythonSdkType) {
-            builder.appendLine("  Project SDK: ${projectSdk.name}")
-            builder.appendLine("  Path: ${projectSdk.homePath ?: "(no home path)"}")
-            builder.appendLine("  Version: ${projectSdk.versionString ?: "(unknown)"}")
+        val sdkInfo = ReadAction.nonBlocking<SdkInfoData> {
+            val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+            val isPython = projectSdk != null && projectSdk.sdkType is PythonSdkType
+
+            val configs = DatamancerDbtProjectIndexService.getInstance(project).getAllDbtConfigsSync()
+            val moduleManager = ModuleManager.getInstance(project)
+
+            val moduleSdks = configs.mapNotNull { (moduleName, _) ->
+                val module = moduleManager.findModuleByName(moduleName) ?: return@mapNotNull null
+                val sdk = runCatching { PythonSdkUtil.findPythonSdk(module) }.getOrNull()
+                    ?: return@mapNotNull null
+                Triple(moduleName, sdk.name, sdk.homePath)
+            }
+
+            val allPythonSdks = ProjectJdkTable.getInstance().allJdks
+                .filter { it.sdkType is PythonSdkType }
+                .map { it.name to it.homePath }
+
+            SdkInfoData(
+                projectSdkName = projectSdk?.name,
+                projectSdkPath = projectSdk?.homePath,
+                projectSdkVersion = projectSdk?.versionString,
+                isPythonSdk = isPython,
+                moduleSdks = moduleSdks,
+                allPythonSdks = allPythonSdks,
+            )
+        }.executeSynchronously()
+
+        if (sdkInfo.isPythonSdk) {
+            builder.appendLine("  Project SDK: ${sdkInfo.projectSdkName}")
+            builder.appendLine("  Path: ${sdkInfo.projectSdkPath ?: "(no home path)"}")
+            builder.appendLine("  Version: ${sdkInfo.projectSdkVersion ?: "(unknown)"}")
         } else {
             builder.appendLine("  Project SDK: (not a Python SDK)")
         }
 
-        // Module-level SDKs for dbt projects
-        val indexService = DatamancerDbtProjectIndexService.getInstance(project)
-        val configs = indexService.getAllDbtConfigsSync()
-        if (configs.isNotEmpty()) {
-            val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
-            for ((moduleName, _) in configs) {
-                val module = moduleManager.findModuleByName(moduleName) ?: continue
-                val moduleSdk = try {
-                    PythonSdkUtil.findPythonSdk(module)
-                } catch (_: Exception) {
-                    null
-                }
-                if (moduleSdk != null) {
-                    builder.appendLine("  Module '$moduleName' SDK: ${moduleSdk.name}")
-                    builder.appendLine("    Path: ${moduleSdk.homePath ?: "(no home path)"}")
-                    builder.appendLine("    Version: ${moduleSdk.versionString ?: "(unknown)"}")
-                }
-            }
+        for ((moduleName, sdkName, sdkPath) in sdkInfo.moduleSdks) {
+            builder.appendLine("  Module '$moduleName' SDK: $sdkName")
+            builder.appendLine("    Path: ${sdkPath ?: "(no home path)"}")
         }
 
-        // All registered Python SDKs
-        val allPythonSdks = ProjectJdkTable.getInstance().allJdks
-            .filter { it.sdkType is PythonSdkType }
-        builder.appendLine("  Registered Python SDKs: ${allPythonSdks.size}")
-        for (sdk in allPythonSdks) {
-            builder.appendLine("    - ${sdk.name}: ${sdk.homePath ?: "(no path)"}")
+        builder.appendLine("  Registered Python SDKs: ${sdkInfo.allPythonSdks.size}")
+        for ((name, path) in sdkInfo.allPythonSdks) {
+            builder.appendLine("    - $name: ${path ?: "(no path)"}")
         }
         builder.appendLine()
     }
@@ -96,8 +122,7 @@ class DatamancerDbtCoreDebugInfoContributor : DatamancerDebugInfoContributor {
     private fun appendDbtVersionInfo(project: Project, builder: StringBuilder) {
         builder.appendLine("dbt Version:")
 
-        val pythonSdk = findBestPythonSdk(project)
-        val pythonPath = pythonSdk?.homePath
+        val pythonPath = findBestPythonPath(project)
 
         if (pythonPath == null) {
             builder.appendLine("  (no Python SDK configured, cannot query dbt version)")
@@ -141,32 +166,27 @@ class DatamancerDbtCoreDebugInfoContributor : DatamancerDebugInfoContributor {
     }
 
     /**
-     * Finds the best available Python SDK: project SDK first, then any
-     * module-level SDK from a dbt project, then any registered Python SDK.
+     * Finds the home path of the best available Python SDK under a read action.
      */
-    private fun findBestPythonSdk(project: Project): Sdk? {
-        val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-        if (projectSdk != null && projectSdk.sdkType is PythonSdkType) {
-            return projectSdk
-        }
+    private fun findBestPythonPath(project: Project): String? {
+        return ReadAction.nonBlocking<String?> {
+            val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+            if (projectSdk != null && projectSdk.sdkType is PythonSdkType) {
+                return@nonBlocking projectSdk.homePath
+            }
 
-        val indexService = DatamancerDbtProjectIndexService.getInstance(project)
-        val configs = indexService.getAllDbtConfigsSync()
-        if (configs.isNotEmpty()) {
-            val moduleManager = com.intellij.openapi.module.ModuleManager.getInstance(project)
+            val configs = DatamancerDbtProjectIndexService.getInstance(project).getAllDbtConfigsSync()
+            val moduleManager = ModuleManager.getInstance(project)
             for ((moduleName, _) in configs) {
                 val module = moduleManager.findModuleByName(moduleName) ?: continue
-                val moduleSdk = try {
-                    PythonSdkUtil.findPythonSdk(module)
-                } catch (_: Exception) {
-                    null
-                }
-                if (moduleSdk != null) return moduleSdk
+                val sdk = runCatching { PythonSdkUtil.findPythonSdk(module) }.getOrNull()
+                if (sdk?.homePath != null) return@nonBlocking sdk.homePath
             }
-        }
 
-        return ProjectJdkTable.getInstance().allJdks
-            .firstOrNull { it.sdkType is PythonSdkType }
+            ProjectJdkTable.getInstance().allJdks
+                .firstOrNull { it.sdkType is PythonSdkType }
+                ?.homePath
+        }.executeSynchronously()
     }
 
     private fun appendMiseInfo(project: Project, builder: StringBuilder) {

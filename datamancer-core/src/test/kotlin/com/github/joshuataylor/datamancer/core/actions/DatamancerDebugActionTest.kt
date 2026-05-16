@@ -57,7 +57,7 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
 
     fun testCollectorProducesNonEmptyOutput() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertNotNull(output)
         assertTrue("Output should not be empty", output.isNotEmpty())
@@ -65,14 +65,14 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
 
     fun testCollectorOutputContainsHeader() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain header", output.contains("Datamancer Debug Information"))
     }
 
     fun testCollectorOutputContainsEnvironmentSection() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain Generated timestamp", output.contains("Generated:"))
         assertTrue("Output should contain Plugin Version", output.contains("Plugin Version:"))
@@ -82,35 +82,35 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
 
     fun testCollectorOutputContainsWorkspaceSection() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain WORKSPACE & PROJECTS section", output.contains("WORKSPACE & PROJECTS"))
     }
 
     fun testCollectorOutputContainsSourcesSection() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain INDEXED SOURCES section", output.contains("INDEXED SOURCES"))
     }
 
     fun testCollectorOutputContainsVariablesSection() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain INDEXED VARIABLES section", output.contains("INDEXED VARIABLES"))
     }
 
     fun testCollectorOutputContainsFooter() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain footer", output.contains("END OF DEBUG INFO"))
     }
 
     fun testCollectorOutputContainsProjectName() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         assertTrue("Output should contain Project name", output.contains("Project:"))
     }
@@ -120,12 +120,7 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
         val psiFile = myFixture.configureByText("test.sql", "SELECT * FROM customers")
         val collector = DatamancerDebugInfoCollector(project)
 
-        // Create an event with file info
-        val presentation = Presentation()
-        val dataContext = createDataContextWithFile(psiFile.virtualFile)
-        val event = AnActionEvent.createFromDataContext("test", presentation, dataContext)
-
-        val output = collector.collectAll(event)
+        val output = collector.collectAll(psiFile.virtualFile, null, null)
 
         assertTrue("Output should contain CURRENT FILE INFO section", output.contains("CURRENT FILE INFO"))
         assertTrue("Output should contain file name", output.contains("test.sql"))
@@ -134,18 +129,14 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
     fun testCollectorWithNoFileOpen() {
         val collector = DatamancerDebugInfoCollector(project)
 
-        val presentation = Presentation()
-        val dataContext = createDataContextWithProject()
-        val event = AnActionEvent.createFromDataContext("test", presentation, dataContext)
+        val output = collector.collectAll(null, null, null)
 
-        val output = collector.collectAll(event)
-
-        assertTrue("Output should indicate no file open", output.contains("No file currently open"))
+        assertFalse("Output should not contain file info when no file", output.contains("CURRENT FILE INFO"))
     }
 
     fun testCollectorOutputHasCorrectSeparators() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         val separatorCount = output.split("====").size - 1
         assertTrue("Output should have multiple separator lines", separatorCount >= 10)
@@ -153,7 +144,7 @@ class DatamancerDebugActionTest : BasePlatformTestCase() {
 
     fun testCollectorHandlesNullEvent() {
         val collector = DatamancerDebugInfoCollector(project)
-        val output = collector.collectAll(null)
+        val output = collector.collectAll(null, null, null)
 
         // Should not contain CURRENT FILE INFO section when event is null
         assertFalse(

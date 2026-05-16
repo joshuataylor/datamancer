@@ -5,9 +5,14 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -30,19 +35,29 @@ class DatamancerDebugAction : AnAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
 
-        val debugInfo = try {
-            val collector = DatamancerDebugInfoCollector(project)
-            collector.collectAll(event)
-        } catch (e: Exception) {
-            "Failed to collect debug info: ${e.message}\n${e.stackTraceToString()}"
-        }
+        // Capture event data on EDT before switching to background thread.
+        // AnActionEvent data context may not be safe to query from background threads.
+        val virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE)
+        val psiFile = event.getData(CommonDataKeys.PSI_FILE)
+        val editor = event.getData(CommonDataKeys.EDITOR)
 
-        val outputFile = writeDebugFile(project, debugInfo)
+        event.coroutineScope.launch(Dispatchers.IO) {
+            val debugInfo = try {
+                val collector = DatamancerDebugInfoCollector(project)
+                collector.collectAll(virtualFile, psiFile, editor)
+            } catch (e: Exception) {
+                "Failed to collect debug info: ${e.message}\n${e.stackTraceToString()}"
+            }
 
-        if (outputFile != null) {
-            showSuccessNotification(project, outputFile)
-        } else {
-            showErrorNotification(project)
+            val outputFile = writeDebugFile(project, debugInfo)
+
+            withContext(Dispatchers.EDT) {
+                if (outputFile != null) {
+                    showSuccessNotification(project, outputFile)
+                } else {
+                    showErrorNotification(project)
+                }
+            }
         }
     }
 

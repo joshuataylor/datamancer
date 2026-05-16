@@ -8,12 +8,14 @@ import com.github.joshuataylor.datamancer.core.services.DbtSourceIndexService
 import com.github.joshuataylor.datamancer.core.services.DbtVarIndexService
 import com.github.joshuataylor.datamancer.core.workspace.DatamancerProjectConfigStore
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -27,6 +29,9 @@ import java.time.format.DateTimeFormatter
  * - Current file information (if a file is open)
  * - Indexed sources, variables, macros, and column metadata models
  * - Extension-contributed sections (e.g. manifest data from backend plugins)
+ *
+ * Designed to run on a background thread (Dispatchers.IO). PSI and model access
+ * is wrapped in read actions where needed.
  */
 class DatamancerDebugInfoCollector(private val project: Project) {
 
@@ -37,15 +42,19 @@ class DatamancerDebugInfoCollector(private val project: Project) {
 
     /**
      * Collects all debug information and returns it as a formatted string.
+     *
+     * @param virtualFile The currently open virtual file, captured on EDT before dispatching
+     * @param psiFile The currently open PSI file, captured on EDT before dispatching
+     * @param editor The currently active editor, captured on EDT before dispatching
      */
-    fun collectAll(event: AnActionEvent?): String {
+    fun collectAll(virtualFile: VirtualFile?, psiFile: PsiFile?, editor: Editor?): String {
         return buildString {
             appendHeader()
             appendSafe { appendEnvironmentInfo() }
             appendSafe { appendGeneralSettings() }
             appendSafe { appendWorkspaceInfo() }
-            if (event != null) {
-                appendSafe { appendCurrentFileInfo(event) }
+            if (virtualFile != null) {
+                appendSafe { appendCurrentFileInfo(virtualFile, psiFile, editor) }
             }
             appendSafe { appendIndexedSources() }
             appendSafe { appendIndexedVariables() }
@@ -142,20 +151,24 @@ class DatamancerDebugInfoCollector(private val project: Project) {
         }
     }
 
-    private fun StringBuilder.appendCurrentFileInfo(event: AnActionEvent) {
+    /**
+     * Holds PSI-derived data collected under a read action for thread-safe formatting.
+     */
+    private data class PsiSectionData(
+        val languageName: String?,
+        val fileClassName: String?,
+        val allLanguages: List<String>?,
+        val elementHierarchy: List<String>?,
+    )
+
+    private fun StringBuilder.appendCurrentFileInfo(
+        virtualFile: VirtualFile,
+        psiFile: PsiFile?,
+        editor: Editor?,
+    ) {
         appendLine(SEPARATOR)
         appendLine("                              CURRENT FILE INFO")
         appendLine(SEPARATOR)
-
-        val virtualFile = event.getData(CommonDataKeys.VIRTUAL_FILE)
-        val psiFile = event.getData(CommonDataKeys.PSI_FILE)
-        val editor = event.getData(CommonDataKeys.EDITOR)
-
-        if (virtualFile == null) {
-            appendLine("No file currently open.")
-            appendLine()
-            return
-        }
 
         appendLine("File: ${virtualFile.path}")
         appendLine("File Name: ${virtualFile.name}")
@@ -163,7 +176,7 @@ class DatamancerDebugInfoCollector(private val project: Project) {
         appendLine("File Size: ${virtualFile.length} bytes")
         appendLine("Is Writable: ${virtualFile.isWritable}")
 
-        // Check if file is in a dbt project
+        // Check if file is in a dbt project (ConcurrentHashMap lookup, no read action needed)
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
         val configs = indexService.getAllDbtConfigsSync()
         val containingProject = configs.entries.find { (_, config) ->
@@ -176,16 +189,32 @@ class DatamancerDebugInfoCollector(private val project: Project) {
             appendLine("In dbt project: No")
         }
 
-        if (psiFile != null) {
+        // Collect PSI-derived data under a read action (may be on a background thread)
+        val psiData = if (psiFile != null) {
+            ReadAction.nonBlocking<PsiSectionData?> {
+                val languageName = psiFile.language.displayName
+                val fileClassName = psiFile.javaClass.simpleName
+                val allLanguages = psiFile.viewProvider.languages.map { it.displayName }
+                val hierarchy = if (editor != null) {
+                    val elementAtCaret = psiFile.findElementAt(editor.caretModel.offset)
+                    elementAtCaret?.let { buildPsiHierarchyData(it) }
+                } else {
+                    null
+                }
+                PsiSectionData(languageName, fileClassName, allLanguages, hierarchy)
+            }.executeSynchronously()
+        } else {
+            null
+        }
+
+        if (psiData != null) {
             appendLine()
             appendLine("PSI Information:")
-            appendLine("  Language: ${psiFile.language.displayName}")
-            appendLine("  File Class: ${psiFile.javaClass.simpleName}")
+            appendLine("  Language: ${psiData.languageName}")
+            appendLine("  File Class: ${psiData.fileClassName}")
 
-            // Get all languages in the file (for multi-language files)
-            val languages = psiFile.viewProvider.languages
-            if (languages.size > 1) {
-                appendLine("  All Languages: ${languages.map { it.displayName }}")
+            if (psiData.allLanguages != null && psiData.allLanguages.size > 1) {
+                appendLine("  All Languages: ${psiData.allLanguages}")
             }
         }
 
@@ -203,13 +232,11 @@ class DatamancerDebugInfoCollector(private val project: Project) {
                 appendLine("  Selected Text Length: ${selectionModel.selectedText?.length ?: 0}")
             }
 
-            // Get PSI element at caret
-            if (psiFile != null) {
-                val elementAtCaret = psiFile.findElementAt(caretModel.offset)
-                if (elementAtCaret != null) {
-                    appendLine()
-                    appendLine("Element at Caret:")
-                    appendPsiHierarchy(elementAtCaret, indent = "  ")
+            if (psiData?.elementHierarchy != null) {
+                appendLine()
+                appendLine("Element at Caret:")
+                for (line in psiData.elementHierarchy) {
+                    appendLine(line)
                 }
             }
         }
@@ -217,7 +244,11 @@ class DatamancerDebugInfoCollector(private val project: Project) {
         appendLine()
     }
 
-    private fun StringBuilder.appendPsiHierarchy(element: PsiElement, indent: String, maxDepth: Int = 5) {
+    /**
+     * Build PSI hierarchy data as pre-formatted lines. Must be called under a read action.
+     */
+    private fun buildPsiHierarchyData(element: PsiElement, indent: String = "  ", maxDepth: Int = 5): List<String> {
+        val lines = mutableListOf<String>()
         var current: PsiElement? = element
         var depth = 0
         val elements = mutableListOf<String>()
@@ -233,15 +264,17 @@ class DatamancerDebugInfoCollector(private val project: Project) {
         for ((index, elementDesc) in elements.withIndex()) {
             val currentIndent = indent + "  ".repeat(index)
             if (index == 0) {
-                appendLine("${currentIndent}Element: $elementDesc")
+                lines.add("${currentIndent}Element: $elementDesc")
             } else {
-                appendLine("${currentIndent}Parent: $elementDesc")
+                lines.add("${currentIndent}Parent: $elementDesc")
             }
         }
 
         if (depth >= maxDepth) {
-            appendLine("$indent${"  ".repeat(maxDepth)}... (truncated)")
+            lines.add("$indent${"  ".repeat(maxDepth)}... (truncated)")
         }
+
+        return lines
     }
 
     private fun StringBuilder.appendIndexedSources() {
