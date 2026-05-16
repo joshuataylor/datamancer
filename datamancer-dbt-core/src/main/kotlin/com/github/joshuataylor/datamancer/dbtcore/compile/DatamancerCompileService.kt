@@ -3,6 +3,7 @@ package com.github.joshuataylor.datamancer.dbtcore.compile
 import com.github.joshuataylor.datamancer.core.CompiledDbtModel
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -13,6 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -24,7 +26,7 @@ import java.nio.charset.StandardCharsets
  * Extracts the bundled Python script and invokes it with the module's Python SDK.
  */
 @Service(Service.Level.PROJECT)
-class DatamancerCompileService(private val project: Project) {
+class DatamancerCompileService(private val project: Project, val cs: CoroutineScope) {
     private val log = logger<DatamancerCompileService>()
 
     private val json = Json {
@@ -146,37 +148,33 @@ class DatamancerCompileService(private val project: Project) {
      * 1. Module-level Python SDK (via Python facet)
      * 2. Project-level SDK (if it's a Python SDK)
      * 3. Any Python SDK in the SDK table
+     *
+     * Requires read action for module facet, project root manager, and SDK table access.
      */
-    private fun findPythonSdk(module: Module): Sdk? {
+    private suspend fun findPythonSdk(module: Module): Sdk? = readAction {
         // 1. Try module-level Python SDK
-        try {
-            val moduleSdk = PythonSdkUtil.findPythonSdk(module)
-            if (moduleSdk != null) {
-                log.debug("Found module-level Python SDK: ${moduleSdk.name}")
-                return moduleSdk
-            }
-        } catch (e: Exception) {
-            log.debug("Error finding module Python SDK: ${e.message}")
+        val moduleSdk = runCatching { PythonSdkUtil.findPythonSdk(module) }.getOrNull()
+        if (moduleSdk != null) {
+            log.debug("Found module-level Python SDK: ${moduleSdk.name}")
+            return@readAction moduleSdk
         }
 
         // 2. Try project-level SDK
         val projectSdk = ProjectRootManager.getInstance(project).projectSdk
         if (projectSdk != null && projectSdk.sdkType is PythonSdkType) {
             log.debug("Found project-level Python SDK: ${projectSdk.name}")
-            return projectSdk
+            return@readAction projectSdk
         }
 
         // 3. Try to find any Python SDK in the SDK table
-        val allPythonSdks = ProjectJdkTable.getInstance().allJdks
-            .filter { it.sdkType is PythonSdkType }
-        if (allPythonSdks.isNotEmpty()) {
-            val sdk = allPythonSdks.first()
-            log.debug("Found Python SDK in SDK table: ${sdk.name}")
-            return sdk
+        val firstPython = ProjectJdkTable.getInstance().allJdks
+            .firstOrNull { it.sdkType is PythonSdkType }
+        if (firstPython != null) {
+            log.debug("Found Python SDK in SDK table: ${firstPython.name}")
+        } else {
+            log.warn("No Python SDK found for module: ${module.name}")
         }
-
-        log.warn("No Python SDK found for module: ${module.name}")
-        return null
+        firstPython
     }
 
     /**
