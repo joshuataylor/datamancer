@@ -9,6 +9,7 @@ import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Reference for the source name argument in source() function calls.
@@ -22,6 +23,7 @@ class DbtSourceNameReference(
     private val stringLiteral: Jinja2StringLiteral
 ) : DbtModelReferenceBase<Jinja2FunctionCall>(element, textRange, sourceName) {
 
+    @RequiresReadLock
     override fun resolveInner(incompleteCode: Boolean): Array<ResolveResult> {
         val project = element.project
         val sourceIndexService = DbtSourceIndexService.getInstance(project)
@@ -37,6 +39,7 @@ class DbtSourceNameReference(
     /**
      * Provides code completion for source names.
      */
+    @RequiresReadLock
     override fun getVariants(): Array<Any> {
         val project = element.project
         val sourceIndexService = DbtSourceIndexService.getInstance(project)

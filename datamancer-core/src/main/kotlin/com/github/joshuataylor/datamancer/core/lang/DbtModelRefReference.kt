@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
 import com.intellij.sql.SqlFileType
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Reference implementation for dbt `ref()` function calls.
@@ -40,6 +41,7 @@ class DbtModelRefReference(
      * @param incompleteCode Whether to consider incomplete code during resolution
      * @return Array containing the resolved element, or an empty array if not found
      */
+    @RequiresReadLock
     override fun resolveInner(incompleteCode: Boolean): Array<ResolveResult> {
         val project = element.project
 
@@ -73,6 +75,7 @@ class DbtModelRefReference(
      *
      * @return Array of lookup elements for code completion
      */
+    @RequiresReadLock
     override fun getVariants(): Array<Any> {
         val project = element.project
         val variants = mutableListOf<LookupElement>()

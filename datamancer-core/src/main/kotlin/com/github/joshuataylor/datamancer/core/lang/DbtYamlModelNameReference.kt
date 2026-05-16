@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLScalar
 
 /**
@@ -26,6 +27,7 @@ class DbtYamlModelNameReference(
         return super.handleElementRename(FileUtilRt.getNameWithoutExtension(newElementName))
     }
 
+    @RequiresReadLock
     override fun resolveInner(incompleteCode: Boolean): Array<ResolveResult> {
         val project = element.project
 

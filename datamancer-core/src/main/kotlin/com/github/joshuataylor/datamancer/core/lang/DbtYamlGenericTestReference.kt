@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveResult
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLScalar
 
 /**
@@ -24,6 +25,7 @@ class DbtYamlGenericTestReference(
     testName: String
 ) : DbtModelReferenceBase<YAMLScalar>(element, textRange, testName) {
 
+    @RequiresReadLock
     override fun resolveInner(incompleteCode: Boolean): Array<ResolveResult> {
         val project = element.project
         val testIndexService = DbtGenericTestIndexService.getInstance(project)

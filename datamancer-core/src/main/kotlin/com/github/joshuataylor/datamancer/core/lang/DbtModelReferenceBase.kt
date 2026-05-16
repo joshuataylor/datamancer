@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Abstract base class for dbt model references.
@@ -56,6 +57,7 @@ abstract class DbtModelReferenceBase<T : PsiElement>(
      * @param incompleteCode Whether to consider incomplete code during resolution
      * @return Array of resolve results (may be empty if not resolved)
      */
+    @RequiresReadLock
     protected abstract fun resolveInner(incompleteCode: Boolean): Array<ResolveResult>
 
     /**

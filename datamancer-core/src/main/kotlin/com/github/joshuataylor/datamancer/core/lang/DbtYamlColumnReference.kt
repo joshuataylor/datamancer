@@ -3,6 +3,7 @@ package com.github.joshuataylor.datamancer.core.lang
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.yaml.psi.YAMLScalar
 
 /**
@@ -25,6 +26,7 @@ class DbtYamlColumnReference(
     private val columnName: String
 ) : PsiReferenceBase<YAMLScalar>(element, textRange, true) {
 
+    @RequiresReadLock
     override fun resolve(): PsiElement? {
         val project = element.project
 

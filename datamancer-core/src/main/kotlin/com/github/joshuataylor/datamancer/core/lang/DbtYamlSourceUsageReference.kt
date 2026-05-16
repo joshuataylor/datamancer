@@ -5,6 +5,7 @@ import com.intellij.jinja.tags.Jinja2FunctionCall
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.yaml.psi.YAMLScalar
 
@@ -29,6 +30,7 @@ class DbtYamlSourceUsageReference(
     private val tableName: String?
 ) : DbtModelReferenceBase<YAMLScalar>(element, textRange, tableName ?: sourceName) {
 
+    @RequiresReadLock
     override fun resolveInner(incompleteCode: Boolean): Array<ResolveResult> {
         val project = element.project
         val allModels = DbtDirectories.findAllModels(project)
