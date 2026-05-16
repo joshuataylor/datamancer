@@ -21,13 +21,13 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -104,8 +104,8 @@ class DatamancerRunConfiguration(
             consoleView.print("dbt Compile & Run: ${configuration.modelName}\n", ConsoleViewContentType.NORMAL_OUTPUT)
             consoleView.print("-".repeat(50) + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
 
-            // Launch the async compilation and execution
-            CoroutineScope(Dispatchers.Default).launch {
+            // Launch the async compilation and execution on the compile service's scope
+            DatamancerCompileService.getInstance(project).cs.launch(Dispatchers.Default) {
                 try {
                     executeCompileAndRun(consoleView)
                 } finally {
@@ -130,8 +130,10 @@ class DatamancerRunConfiguration(
                 return
             }
 
-            // Get the module
-            val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
+            // Get the module (read action required -- running on Dispatchers.Default)
+            val module = readAction {
+                ModuleManager.getInstance(project).findModuleByName(moduleName)
+            }
             if (module == null) {
                 printError(consoleView, "Module not found: $moduleName")
                 return
