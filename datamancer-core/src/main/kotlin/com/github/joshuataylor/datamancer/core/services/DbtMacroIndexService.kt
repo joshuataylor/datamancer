@@ -3,8 +3,10 @@ package com.github.joshuataylor.datamancer.core.services
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
 
 /**
  * Service for indexing and finding dbt macro definitions from .sql files in macros/ directories.
@@ -183,16 +185,13 @@ class DbtMacroIndexService(private val project: Project) {
      * Recursively collects all .sql files from a directory.
      */
     private fun collectSqlFiles(directory: VirtualFile, collector: MutableList<VirtualFile>) {
-        if (!directory.isDirectory) {
-            return
-        }
-
-        for (child in directory.children) {
-            if (child.isDirectory) {
-                collectSqlFiles(child, collector)
-            } else if (child.extension == "sql") {
-                collector.add(child)
+        VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                if (!file.isDirectory && file.extension == "sql") {
+                    collector.add(file)
+                }
+                return true
             }
-        }
+        })
     }
 }

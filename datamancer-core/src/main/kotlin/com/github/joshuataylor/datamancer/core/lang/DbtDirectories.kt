@@ -3,8 +3,10 @@ package com.github.joshuataylor.datamancer.core.lang
 import com.github.joshuataylor.datamancer.core.services.DatamancerDbtProjectIndexService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -133,17 +135,14 @@ object DbtDirectories {
      * Recursively collects all .sql files from a directory.
      */
     private fun collectSqlFiles(directory: VirtualFile, collector: MutableList<VirtualFile>) {
-        if (!directory.isDirectory) {
-            return
-        }
-
-        for (child in directory.children) {
-            if (child.isDirectory) {
-                collectSqlFiles(child, collector)
-            } else if (child.extension == "sql") {
-                collector.add(child)
+        VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                if (!file.isDirectory && file.extension == "sql") {
+                    collector.add(file)
+                }
+                return true
             }
-        }
+        })
     }
 
     /**
@@ -194,35 +193,27 @@ object DbtDirectories {
     }
 
     private fun findFileRecursively(directory: VirtualFile, fileName: String): VirtualFile? {
-        if (!directory.isDirectory) {
-            return null
-        }
-
-        for (child in directory.children) {
-            if (child.isDirectory) {
-                val found = findFileRecursively(child, fileName)
-                if (found != null) {
-                    return found
+        var result: VirtualFile? = null
+        VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                if (!file.isDirectory && file.name == fileName) {
+                    result = file
+                    return false
                 }
-            } else if (child.name == fileName) {
-                return child
+                return true
             }
-        }
-
-        return null
+        })
+        return result
     }
 
     private fun collectCsvFiles(directory: VirtualFile, collector: MutableList<VirtualFile>) {
-        if (!directory.isDirectory) {
-            return
-        }
-
-        for (child in directory.children) {
-            if (child.isDirectory) {
-                collectCsvFiles(child, collector)
-            } else if (child.extension == "csv") {
-                collector.add(child)
+        VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                if (!file.isDirectory && file.extension == "csv") {
+                    collector.add(file)
+                }
+                return true
             }
-        }
+        })
     }
 }
