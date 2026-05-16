@@ -15,6 +15,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.sql.dialects.SqlLanguageDialect
 import com.intellij.sql.psi.SqlLanguage
 import com.intellij.sql.psi.SqlQueryExpression
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Utility methods for Jinja2 and SQL PSI operations.
@@ -30,6 +31,7 @@ object DatamancerUtils {
      * @param call The Jinja2 function call to check
      * @return true if this is a ref() call, false otherwise
      */
+    @RequiresReadLock
     @JvmStatic
     fun isRefCall(call: Jinja2FunctionCall): Boolean {
         val callee = call.callee
@@ -42,6 +44,7 @@ object DatamancerUtils {
      * @param call The Jinja2 function call to check
      * @return true if this is a source() call, false otherwise
      */
+    @RequiresReadLock
     @JvmStatic
     fun isSourceCall(call: Jinja2FunctionCall): Boolean {
         val callee = call.callee
@@ -57,6 +60,7 @@ object DatamancerUtils {
      * @param element The SQL PSI element (typically a table reference placeholder)
      * @return The Jinja2FunctionCall if found, null otherwise
      */
+    @RequiresReadLock
     @JvmStatic
     fun getJinjaCall(element: PsiElement): Jinja2FunctionCall? {
         val viewProvider = element.containingFile.viewProvider
@@ -82,6 +86,7 @@ object DatamancerUtils {
      * @param refCall The ref() function call
      * @return The model name (string literal value), or null if not found
      */
+    @RequiresReadLock
     @JvmStatic
     fun getReferencedName(refCall: Jinja2FunctionCall): String? {
         val stringLiteral = PsiTreeUtil.findChildOfType(refCall, Jinja2StringLiteral::class.java)
@@ -96,6 +101,7 @@ object DatamancerUtils {
      * @param functionCall The Jinja2 function call
      * @return List of string literal values in order, empty if none found
      */
+    @RequiresReadLock
     @JvmStatic
     fun getStringArguments(functionCall: Jinja2FunctionCall): List<String> {
         return PsiTreeUtil.findChildrenOfType(functionCall, Jinja2StringLiteral::class.java)
@@ -108,6 +114,7 @@ object DatamancerUtils {
      * @param sourceCall The source() function call
      * @return Pair of (sourceName, tableName), or null if arguments are invalid
      */
+    @RequiresReadLock
     @JvmStatic
     fun getSourceArguments(sourceCall: Jinja2FunctionCall): Pair<String, String>? {
         val args = getStringArguments(sourceCall)
@@ -124,6 +131,7 @@ object DatamancerUtils {
      * @param functionCall The Jinja2 function call
      * @return List of Jinja2StringLiteral elements in order
      */
+    @RequiresReadLock
     @JvmStatic
     fun getStringLiteralArguments(functionCall: Jinja2FunctionCall): List<Jinja2StringLiteral> {
         return PsiTreeUtil.findChildrenOfType(functionCall, Jinja2StringLiteral::class.java).toList()
@@ -138,6 +146,7 @@ object DatamancerUtils {
      * @param psiFile The PSI file to search
      * @return The last SqlQueryExpression, or null if none found
      */
+    @RequiresReadLock
     @JvmStatic
     fun findLastSelectQuery(psiFile: PsiFile): SqlQueryExpression? {
         var result: SqlQueryExpression? = null
@@ -164,6 +173,7 @@ object DatamancerUtils {
      * @param file The PSI file to check
      * @return true if the file is SQL or a SQL dialect, false otherwise
      */
+    @RequiresReadLock
     @JvmStatic
     fun isSqlDialect(file: PsiFile): Boolean {
         val viewProvider = file.viewProvider

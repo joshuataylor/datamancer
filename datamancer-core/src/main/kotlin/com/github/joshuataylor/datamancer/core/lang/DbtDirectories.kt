@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Utility class for discovering dbt model and seed files within a project.
@@ -30,6 +31,7 @@ object DbtDirectories {
      * @param modelName The name of the model (without .sql extension)
      * @return The PsiFile for the model, or null if not found
      */
+    @RequiresReadLock
     fun findModel(project: Project, modelName: String): PsiFile? {
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
         val allConfigs = indexService.getAllDbtConfigsSync()
@@ -99,6 +101,7 @@ object DbtDirectories {
      * @param project The current project
      * @return List of all SQL files in models/ directories
      */
+    @RequiresReadLock
     fun findAllModels(project: Project): List<PsiFile> {
         val indexService = DatamancerDbtProjectIndexService.getInstance(project)
         val allConfigs = indexService.getAllDbtConfigsSync()
@@ -172,6 +175,7 @@ object DbtDirectories {
     /**
      * Extracts the model name (without extension) from a file.
      */
+    @RequiresReadLock
     fun getModelNameFromFile(file: PsiFile): String {
         return file.virtualFile.nameWithoutExtension
     }
