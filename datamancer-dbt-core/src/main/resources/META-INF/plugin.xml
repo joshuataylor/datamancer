@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.github.joshuataylor.datamancer.dbtcore</id>
     <name>Datamancer - dbt Core Backend</name>
-    <vendor>joshuataylor</vendor>
+    <vendor url="https://github.com/joshuataylor/datamancer" email="joshuataylorx@gmail.com">joshuataylor</vendor>
     <description><![CDATA[
 <p>Compilation and execution backend for the <b>Datamancer</b> plugin, powered by the
 <a href="https://www.getdbt.com/">dbt</a> CLI. Requires the Datamancer core plugin to be installed.</p>
@@ -35,6 +35,7 @@
         <plugin id="Pythonid"/>
         <plugin id="PythonCore"/>
     </dependencies>
+    <idea-version since-build="261"/>
 
     <!-- Implement core extension points -->
     <extensions defaultExtensionNs="com.github.joshuataylor.datamancer.core">

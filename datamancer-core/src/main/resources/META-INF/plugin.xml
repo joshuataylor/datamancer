@@ -1,10 +1,13 @@
 <idea-plugin>
     <id>com.github.joshuataylor.datamancer.core</id>
     <name>Datamancer</name>
-    <vendor>joshuataylor</vendor>
+    <vendor url="https://github.com/joshuataylor/datamancer" email="joshuataylorx@gmail.com">joshuataylor</vendor>
+
     <incompatible-with>
         org.jetbrains.dbt
     </incompatible-with>
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="261"/>
     <description><![CDATA[
 <p>Datamancer brings full <a href="https://www.getdbt.com/">dbt</a> (data build tool) support to your JetBrains IDE,
 with intelligent code assistance for SQL files that use Jinja2 templating.</p>
