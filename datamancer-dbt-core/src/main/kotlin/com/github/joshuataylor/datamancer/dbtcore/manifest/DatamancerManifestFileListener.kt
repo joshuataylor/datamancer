@@ -41,7 +41,7 @@ class DatamancerManifestFileListener : AsyncFileListener {
                         val isKnown = configs.values.any { it.projectRoot == projectRoot }
                         if (isKnown) {
                             log.debug("manifest.json changed in $projectRoot, reloading")
-                            DatamancerManifestService.getInstance(project).reloadManifest(projectRoot)
+                            DatamancerManifestService.getInstance(project).reloadManifestAsync(projectRoot)
                         }
                     }
                 }

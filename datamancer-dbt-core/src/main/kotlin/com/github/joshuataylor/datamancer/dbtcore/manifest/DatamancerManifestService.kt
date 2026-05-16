@@ -77,6 +77,16 @@ class DatamancerManifestService(private val project: Project, private val cs: Co
         }.onFailure { log.warn("Failed to parse manifest.json at ${manifestFile.path}", it) }.getOrNull()
     }
 
+    /**
+     * Schedule an asynchronous reload of the manifest for a project root.
+     * Use this from EDT callbacks (e.g. VFS listeners) to avoid blocking I/O on EDT.
+     */
+    fun reloadManifestAsync(projectRoot: String) {
+        cs.launch(Dispatchers.IO) {
+            reloadManifest(projectRoot)
+        }
+    }
+
     fun getManifest(projectRoot: String): DbtManifest? = manifests[projectRoot]
 
     fun getAllManifests(): Map<String, DbtManifest> = manifests
