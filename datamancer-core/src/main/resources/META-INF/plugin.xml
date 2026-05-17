@@ -154,12 +154,55 @@ Not compatible with Community editions or DataGrip (Jinja2 support is required).
 
         <!-- Notification group for debug action -->
         <notificationGroup id="Datamancer" displayType="BALLOON"/>
+
+        <!-- dbt deprecation inspections -->
+        <localInspection
+                language="yaml"
+                groupPath="dbt"
+                groupName="Deprecations"
+                implementationClass="com.github.joshuataylor.datamancer.core.inspection.DbtProjectDeprecatedKeysInspection"
+                displayName="Deprecated dbt_project.yml keys"
+                enabledByDefault="true"
+                level="WARNING"
+                shortName="DbtProjectDeprecatedKeys"/>
+        <localInspection
+                language="yaml"
+                groupPath="dbt"
+                groupName="Deprecations"
+                implementationClass="com.github.joshuataylor.datamancer.core.inspection.DbtProjectMissingPlusPrefixInspection"
+                displayName="Missing '+' prefix on config keys in dbt_project.yml"
+                enabledByDefault="true"
+                level="WARNING"
+                shortName="DbtProjectMissingPlusPrefix"/>
+        <localInspection
+                language="yaml"
+                groupPath="dbt"
+                groupName="Deprecations"
+                implementationClass="com.github.joshuataylor.datamancer.core.inspection.DbtProjectWarnErrorOptionsInspection"
+                displayName="Deprecated warn_error_options keys"
+                enabledByDefault="true"
+                level="WARNING"
+                shortName="DbtProjectWarnErrorOptions"/>
+        <localInspection
+                language="yaml"
+                groupPath="dbt"
+                groupName="Deprecations"
+                implementationClass="com.github.joshuataylor.datamancer.core.inspection.DbtYamlPropertyMovedToConfigInspection"
+                displayName="Property should be under 'config'"
+                enabledByDefault="true"
+                level="WARNING"
+                shortName="DbtYamlPropertyMovedToConfig"/>
     </extensions>
     <!-- dbt-specific Jinja2 tag library for code completion -->
     <extensions defaultExtensionNs="Pythonid">
         <templateLanguageCoreTags language="Jinja2"
                                   implementationClass="com.github.joshuataylor.datamancer.core.lang.DbtTagLibrary"
                                   order="before jinja2"/>
+    </extensions>
+
+    <!-- JSON Schema providers for dbt configuration files -->
+    <extensions defaultExtensionNs="JavaScript.JsonSchema">
+        <ProviderFactory implementation="com.github.joshuataylor.datamancer.core.schema.DatamancerDbtSchemaProviderFactory"/>
     </extensions>
 
     <actions>

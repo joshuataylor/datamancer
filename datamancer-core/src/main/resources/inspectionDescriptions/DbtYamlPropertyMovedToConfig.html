@@ -1,0 +1,40 @@
+<html>
+<body>
+Reports resource properties that should be nested under <code>config:</code> in dbt YAML files.
+<p>
+    Since dbt v1.10, the following properties must be placed under <code>config:</code>
+    on resource definitions:
+</p>
+<ul>
+    <li><code>freshness</code> (on sources)</li>
+    <li><code>meta</code> (on any resource)</li>
+    <li><code>tags</code> (on any resource)</li>
+    <li><code>docs</code> (on any resource)</li>
+    <li><code>group</code> (on models, seeds, snapshots)</li>
+    <li><code>access</code> (on models)</li>
+</ul>
+<p>For example, instead of:</p>
+<pre><code>
+sources:
+  - name: ecom
+    freshness:
+      warn_after:
+        count: 24
+        period: hour
+</code></pre>
+<p>Use:</p>
+<pre><code>
+sources:
+  - name: ecom
+    config:
+      freshness:
+        warn_after:
+          count: 24
+          period: hour
+</code></pre>
+<!-- tooltip end -->
+<p>
+    See <a href="https://docs.getdbt.com/reference/deprecations#propertymovedtoconfigdeprecation">PropertyMovedToConfigDeprecation</a> for details.
+</p>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<html>
+<body>
+Reports deprecated configuration keys in <code>dbt_project.yml</code>.
+<p>
+    The following keys have been renamed or removed and will cause errors in future dbt versions:
+</p>
+<ul>
+    <li><code>data-paths</code> -- renamed to <code>seed-paths</code> (since dbt v1.0)</li>
+    <li><code>source-paths</code> -- renamed to <code>model-paths</code> (since dbt v1.0)</li>
+    <li><code>target-path</code> -- removed (since dbt v1.5, use <code>--target-path</code> CLI flag or <code>DBT_ENGINE_TARGET_PATH</code> env var)</li>
+    <li><code>log-path</code> -- removed (since dbt v1.5, use <code>--log-path</code> CLI flag or <code>DBT_ENGINE_LOG_PATH</code> env var)</li>
+    <li><code>dbt_modules</code> in <code>clean-targets</code> -- should be <code>dbt_packages</code></li>
+</ul>
+<p>
+    Quick-fixes are available to rename or remove the deprecated keys automatically.
+</p>
+<!-- tooltip end -->
+<p>
+    See <a href="https://docs.getdbt.com/reference/deprecations">dbt Deprecations</a> for details.
+</p>
+</body>
+</html>

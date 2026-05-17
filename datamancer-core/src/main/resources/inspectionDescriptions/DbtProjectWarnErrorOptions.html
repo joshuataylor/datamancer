@@ -1,0 +1,31 @@
+<html>
+<body>
+Reports deprecated <code>include</code> and <code>exclude</code> options under
+<code>flags.warn_error_options</code> in <code>dbt_project.yml</code>.
+<p>
+    Since dbt v1.10, these keys have been renamed:
+</p>
+<ul>
+    <li><code>include</code> -- renamed to <code>error</code></li>
+    <li><code>exclude</code> -- renamed to <code>warn</code></li>
+</ul>
+<p>For example, instead of:</p>
+<pre><code>
+flags:
+  warn_error_options:
+    include:
+      - NoNodesForSelectionCriteria
+</code></pre>
+<p>Use:</p>
+<pre><code>
+flags:
+  warn_error_options:
+    error:
+      - NoNodesForSelectionCriteria
+</code></pre>
+<!-- tooltip end -->
+<p>
+    See <a href="https://docs.getdbt.com/reference/deprecations#weoincludeexcludedeprecation">WEOIncludeExcludeDeprecation</a> for details.
+</p>
+</body>
+</html>

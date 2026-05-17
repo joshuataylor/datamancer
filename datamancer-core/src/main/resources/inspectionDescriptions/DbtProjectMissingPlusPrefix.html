@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports config keys missing the <code>+</code> prefix in <code>dbt_project.yml</code>.
+<p>
+    Under node-type blocks (<code>models</code>, <code>seeds</code>, <code>snapshots</code>,
+    <code>tests</code>, <code>analyses</code>), configuration values must use the <code>+</code>
+    prefix to distinguish them from directory path groupings.
+</p>
+<p>For example, instead of:</p>
+<pre><code>
+models:
+  my_project:
+    materialized: table
+</code></pre>
+<p>Use:</p>
+<pre><code>
+models:
+  my_project:
+    +materialized: table
+</code></pre>
+<!-- tooltip end -->
+<p>
+    See <a href="https://docs.getdbt.com/reference/deprecations#missingplusprefixdeprecation">MissingPlusPrefixDeprecation</a> for details.
+</p>
+</body>
+</html>
